@@ -12,8 +12,21 @@ public enum PassStyle: String, Codable, Sendable {
 
 public enum PassStatus: String, Codable, Sendable {
     case active
-    case voided
+    case invalidated
     case expired
+}
+
+public enum TemplateStatus: String, Codable, Sendable {
+    case draft
+    case published
+    case archived
+}
+
+public enum InvitationStatus: String, Codable, Sendable {
+    case pending
+    case accepted
+    case expired
+    case revoked
 }
 
 public enum CertType: String, Codable, Sendable {
@@ -63,8 +76,10 @@ public struct Pass: Codable, Identifiable, Sendable {
     public let pkpassStoragePath: String
     public let pkpassHash: String
     public let expiresAt: String?
+    public let voidedAt: String?
     public let createdAt: String
     public let updatedAt: String
+    public let lastUpdatedAt: String?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -79,8 +94,10 @@ public struct Pass: Codable, Identifiable, Sendable {
         case pkpassStoragePath = "pkpass_storage_path"
         case pkpassHash = "pkpass_hash"
         case expiresAt = "expires_at"
+        case voidedAt = "voided_at"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+        case lastUpdatedAt = "last_updated_at"
     }
 }
 
@@ -89,10 +106,17 @@ public struct Template: Codable, Identifiable, Sendable {
     public let organizationId: String
     public let appId: String
     public let name: String
+    public let description: String?
     public let passStyle: PassStyle
     public let structure: [String: AnyCodable]
     public let fieldSchema: [String: AnyCodable]?
-    public let isPublished: Bool
+    public let status: TemplateStatus
+    public let iconImageId: String?
+    public let logoImageId: String?
+    public let stripImageId: String?
+    public let thumbnailImageId: String?
+    public let backgroundImageId: String?
+    public let publishedAt: String?
     public let createdAt: String
     public let updatedAt: String
 
@@ -100,11 +124,17 @@ public struct Template: Codable, Identifiable, Sendable {
         case id
         case organizationId = "organization_id"
         case appId = "app_id"
-        case name
+        case name, description
         case passStyle = "pass_style"
         case structure
         case fieldSchema = "field_schema"
-        case isPublished = "is_published"
+        case status
+        case iconImageId = "icon_image_id"
+        case logoImageId = "logo_image_id"
+        case stripImageId = "strip_image_id"
+        case thumbnailImageId = "thumbnail_image_id"
+        case backgroundImageId = "background_image_id"
+        case publishedAt = "published_at"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -114,22 +144,20 @@ public struct PassImage: Codable, Identifiable, Sendable {
     public let id: String
     public let organizationId: String
     public let appId: String
-    public let imageType: String
+    public let purpose: String
     public let filename: String
     public let storagePath: String
-    public let contentType: String
-    public let size: Int
+    public let previewUrl: String?
     public let createdAt: String
 
     enum CodingKeys: String, CodingKey {
         case id
         case organizationId = "organization_id"
         case appId = "app_id"
-        case imageType = "image_type"
+        case purpose
         case filename
         case storagePath = "storage_path"
-        case contentType = "content_type"
-        case size
+        case previewUrl = "preview_url"
         case createdAt = "created_at"
     }
 }
@@ -146,6 +174,7 @@ public struct Certificate: Codable, Identifiable, Sendable {
     public let validTo: String?
     public let isActive: Bool
     public let createdAt: String
+    public let updatedAt: String?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -158,17 +187,31 @@ public struct Certificate: Codable, Identifiable, Sendable {
         case validTo = "valid_to"
         case isActive = "is_active"
         case createdAt = "created_at"
+        case updatedAt = "updated_at"
     }
 }
 
 public struct Organization: Codable, Identifiable, Sendable {
     public let id: String
     public let name: String
+    public let slug: String?
+    public let apnsKeyId: String?
+    public let billingPlan: String?
+    public let monthlyPassLimit: Int?
+    public let features: [String: AnyCodable]?
+    public let isActive: Bool?
+    public let webhookSecret: String?
     public let createdAt: String
     public let updatedAt: String
 
     enum CodingKeys: String, CodingKey {
-        case id, name
+        case id, name, slug
+        case apnsKeyId = "apns_key_id"
+        case billingPlan = "billing_plan"
+        case monthlyPassLimit = "monthly_pass_limit"
+        case features
+        case isActive = "is_active"
+        case webhookSecret = "webhook_secret"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -181,7 +224,9 @@ public struct App: Codable, Identifiable, Sendable {
     public let appleTeamId: String?
     public let passTypeIdentifier: String?
     public let validationWebhookUrl: String?
-    public let eventWebhookUrl: String?
+    public let webhookUrl: String?
+    public let isActive: Bool?
+    public let webhookSecret: String?
     public let createdAt: String
     public let updatedAt: String
 
@@ -192,7 +237,9 @@ public struct App: Codable, Identifiable, Sendable {
         case appleTeamId = "apple_team_id"
         case passTypeIdentifier = "pass_type_identifier"
         case validationWebhookUrl = "validation_webhook_url"
-        case eventWebhookUrl = "event_webhook_url"
+        case webhookUrl = "webhook_url"
+        case isActive = "is_active"
+        case webhookSecret = "webhook_secret"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -203,8 +250,10 @@ public struct ApiKey: Codable, Identifiable, Sendable {
     public let organizationId: String
     public let name: String
     public let keyType: KeyType
-    public let prefix: String
+    public let keyPrefix: String
     public let scopes: [String]
+    public let expiresAt: String?
+    public let isActive: Bool?
     public let lastUsedAt: String?
     public let createdAt: String
 
@@ -213,8 +262,10 @@ public struct ApiKey: Codable, Identifiable, Sendable {
         case organizationId = "organization_id"
         case name
         case keyType = "key_type"
-        case prefix
+        case keyPrefix = "key_prefix"
         case scopes
+        case expiresAt = "expires_at"
+        case isActive = "is_active"
         case lastUsedAt = "last_used_at"
         case createdAt = "created_at"
     }
@@ -225,9 +276,11 @@ public struct ApiKeyCreated: Codable, Sendable {
     public let organizationId: String
     public let name: String
     public let keyType: KeyType
-    public let prefix: String
+    public let keyPrefix: String
     public let scopes: [String]
     public let rawKey: String
+    public let expiresAt: String?
+    public let isActive: Bool?
     public let createdAt: String
 
     enum CodingKeys: String, CodingKey {
@@ -235,23 +288,27 @@ public struct ApiKeyCreated: Codable, Sendable {
         case organizationId = "organization_id"
         case name
         case keyType = "key_type"
-        case prefix
+        case keyPrefix = "key_prefix"
         case scopes
         case rawKey = "raw_key"
+        case expiresAt = "expires_at"
+        case isActive = "is_active"
         case createdAt = "created_at"
     }
 }
 
-public struct Member: Codable, Sendable {
+public struct Member: Codable, Identifiable, Sendable {
+    public let id: String
     public let userId: String
     public let email: String
     public let role: OrgRole
-    public let joinedAt: String
+    public let createdAt: String
 
     enum CodingKeys: String, CodingKey {
+        case id
         case userId = "user_id"
         case email, role
-        case joinedAt = "joined_at"
+        case createdAt = "created_at"
     }
 }
 
@@ -259,7 +316,7 @@ public struct Invitation: Codable, Identifiable, Sendable {
     public let id: String
     public let email: String
     public let role: OrgRole
-    public let status: String
+    public let status: InvitationStatus
     public let expiresAt: String
     public let createdAt: String
 
@@ -337,17 +394,17 @@ public struct GeneratePassRequest: Encodable, Sendable {
 }
 
 public struct UpdatePassRequest: Encodable, Sendable {
-    public var data: [String: AnyCodable]?
-    public var expiresAt: String?
+    public let data: [String: AnyCodable]
+    public var pushUpdate: Bool?
 
-    public init(data: [String: AnyCodable]? = nil, expiresAt: String? = nil) {
+    public init(data: [String: AnyCodable], pushUpdate: Bool? = nil) {
         self.data = data
-        self.expiresAt = expiresAt
+        self.pushUpdate = pushUpdate
     }
 
     enum CodingKeys: String, CodingKey {
         case data
-        case expiresAt = "expires_at"
+        case pushUpdate = "push_update"
     }
 }
 
@@ -355,45 +412,75 @@ public struct CreateTemplateRequest: Encodable, Sendable {
     public let name: String
     public let passStyle: PassStyle
     public let structure: [String: AnyCodable]
+    public var description: String?
     public var fieldSchema: [String: AnyCodable]?
+    public var iconImageId: String?
+    public var logoImageId: String?
+    public var stripImageId: String?
+    public var thumbnailImageId: String?
+    public var backgroundImageId: String?
 
     public init(
         name: String,
         passStyle: PassStyle,
         structure: [String: AnyCodable],
+        description: String? = nil,
+        fieldSchema: [String: AnyCodable]? = nil,
+        iconImageId: String? = nil,
+        logoImageId: String? = nil,
+        stripImageId: String? = nil,
+        thumbnailImageId: String? = nil,
+        backgroundImageId: String? = nil
+    ) {
+        self.name = name
+        self.passStyle = passStyle
+        self.structure = structure
+        self.description = description
+        self.fieldSchema = fieldSchema
+        self.iconImageId = iconImageId
+        self.logoImageId = logoImageId
+        self.stripImageId = stripImageId
+        self.thumbnailImageId = thumbnailImageId
+        self.backgroundImageId = backgroundImageId
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case name, description
+        case passStyle = "pass_style"
+        case structure
+        case fieldSchema = "field_schema"
+        case iconImageId = "icon_image_id"
+        case logoImageId = "logo_image_id"
+        case stripImageId = "strip_image_id"
+        case thumbnailImageId = "thumbnail_image_id"
+        case backgroundImageId = "background_image_id"
+    }
+}
+
+public struct UpdateTemplateRequest: Encodable, Sendable {
+    public var name: String?
+    public var description: String?
+    public var passStyle: PassStyle?
+    public var structure: [String: AnyCodable]?
+    public var fieldSchema: [String: AnyCodable]?
+
+    public init(
+        name: String? = nil,
+        description: String? = nil,
+        passStyle: PassStyle? = nil,
+        structure: [String: AnyCodable]? = nil,
         fieldSchema: [String: AnyCodable]? = nil
     ) {
         self.name = name
+        self.description = description
         self.passStyle = passStyle
         self.structure = structure
         self.fieldSchema = fieldSchema
     }
 
     enum CodingKeys: String, CodingKey {
-        case name
+        case name, description
         case passStyle = "pass_style"
-        case structure
-        case fieldSchema = "field_schema"
-    }
-}
-
-public struct UpdateTemplateRequest: Encodable, Sendable {
-    public var name: String?
-    public var structure: [String: AnyCodable]?
-    public var fieldSchema: [String: AnyCodable]?
-
-    public init(
-        name: String? = nil,
-        structure: [String: AnyCodable]? = nil,
-        fieldSchema: [String: AnyCodable]? = nil
-    ) {
-        self.name = name
-        self.structure = structure
-        self.fieldSchema = fieldSchema
-    }
-
-    enum CodingKeys: String, CodingKey {
-        case name
         case structure
         case fieldSchema = "field_schema"
     }
@@ -436,20 +523,10 @@ public struct ChangeRoleRequest: Encodable, Sendable {
 }
 
 public struct CreateAppRequest: Encodable, Sendable {
-    public let name: String
-    public var appleTeamId: String?
-    public var passTypeIdentifier: String?
+    public var name: String?
 
-    public init(name: String, appleTeamId: String? = nil, passTypeIdentifier: String? = nil) {
+    public init(name: String? = nil) {
         self.name = name
-        self.appleTeamId = appleTeamId
-        self.passTypeIdentifier = passTypeIdentifier
-    }
-
-    enum CodingKeys: String, CodingKey {
-        case name
-        case appleTeamId = "apple_team_id"
-        case passTypeIdentifier = "pass_type_identifier"
     }
 }
 
@@ -458,7 +535,7 @@ public struct UpdateAppRequest: Encodable, Sendable {
     public var appleTeamId: String?
     public var passTypeIdentifier: String?
     public var validationWebhookUrl: String?
-    public var eventWebhookUrl: String?
+    public var webhookUrl: String?
     public var regenerateWebhookSecret: Bool?
 
     public init(
@@ -466,14 +543,14 @@ public struct UpdateAppRequest: Encodable, Sendable {
         appleTeamId: String? = nil,
         passTypeIdentifier: String? = nil,
         validationWebhookUrl: String? = nil,
-        eventWebhookUrl: String? = nil,
+        webhookUrl: String? = nil,
         regenerateWebhookSecret: Bool? = nil
     ) {
         self.name = name
         self.appleTeamId = appleTeamId
         self.passTypeIdentifier = passTypeIdentifier
         self.validationWebhookUrl = validationWebhookUrl
-        self.eventWebhookUrl = eventWebhookUrl
+        self.webhookUrl = webhookUrl
         self.regenerateWebhookSecret = regenerateWebhookSecret
     }
 
@@ -482,16 +559,83 @@ public struct UpdateAppRequest: Encodable, Sendable {
         case appleTeamId = "apple_team_id"
         case passTypeIdentifier = "pass_type_identifier"
         case validationWebhookUrl = "validation_webhook_url"
-        case eventWebhookUrl = "event_webhook_url"
+        case webhookUrl = "webhook_url"
         case regenerateWebhookSecret = "regenerate_webhook_secret"
     }
 }
 
 public struct UpdateOrgRequest: Encodable, Sendable {
     public var name: String?
+    public var slug: String?
+    public var apnsKeyId: String?
+    public var apnsKeyP8: String?
 
-    public init(name: String? = nil) {
+    public init(
+        name: String? = nil,
+        slug: String? = nil,
+        apnsKeyId: String? = nil,
+        apnsKeyP8: String? = nil
+    ) {
         self.name = name
+        self.slug = slug
+        self.apnsKeyId = apnsKeyId
+        self.apnsKeyP8 = apnsKeyP8
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case name, slug
+        case apnsKeyId = "apns_key_id"
+        case apnsKeyP8 = "apns_key_p8"
+    }
+}
+
+public struct UploadImageRequest: Encodable, Sendable {
+    public let purpose: String
+    public let filename: String
+    public let data: String
+
+    public init(purpose: String, filename: String, data: String) {
+        self.purpose = purpose
+        self.filename = filename
+        self.data = data
+    }
+}
+
+public struct UploadCertificateRequest: Encodable, Sendable {
+    public let certType: CertType
+    public let certData: String
+
+    public init(certType: CertType, certData: String) {
+        self.certType = certType
+        self.certData = certData
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case certType = "cert_type"
+        case certData = "cert_data"
+    }
+}
+
+public struct UploadP12Request: Encodable, Sendable {
+    public let p12Data: String
+    public var password: String?
+
+    public init(p12Data: String, password: String? = nil) {
+        self.p12Data = p12Data
+        self.password = password
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case p12Data = "p12_data"
+        case password
+    }
+}
+
+public struct AcceptInvitationRequest: Encodable, Sendable {
+    public let token: String
+
+    public init(token: String) {
+        self.token = token
     }
 }
 
@@ -504,22 +648,31 @@ public struct GeneratePassResponse: Sendable {
 }
 
 public struct UpdatePassResponse: Codable, Sendable {
-    public let pass: Pass
-    public let pushSent: Bool
+    public let id: String
+    public let status: PassStatus
+    public let devicesNotified: Int
+    public let updatedAt: String
 
     enum CodingKeys: String, CodingKey {
-        case pass
-        case pushSent = "push_sent"
+        case id, status
+        case devicesNotified = "devices_notified"
+        case updatedAt = "updated_at"
     }
 }
 
 public struct VoidPassResponse: Codable, Sendable {
-    public let pass: Pass
-    public let pushSent: Bool
+    public let id: String
+    public let serialNumber: String
+    public let status: PassStatus
+    public let voidedAt: String
+    public let updatedAt: String
 
     enum CodingKeys: String, CodingKey {
-        case pass
-        case pushSent = "push_sent"
+        case id
+        case serialNumber = "serial_number"
+        case status
+        case voidedAt = "voided_at"
+        case updatedAt = "updated_at"
     }
 }
 
@@ -530,8 +683,10 @@ public struct UpdateAppResponse: Codable, Sendable {
     public let appleTeamId: String?
     public let passTypeIdentifier: String?
     public let validationWebhookUrl: String?
-    public let eventWebhookUrl: String?
+    public let webhookUrl: String?
     public let webhookSecretRaw: String?
+    public let isActive: Bool?
+    public let webhookSecret: String?
     public let createdAt: String
     public let updatedAt: String
 
@@ -542,22 +697,68 @@ public struct UpdateAppResponse: Codable, Sendable {
         case appleTeamId = "apple_team_id"
         case passTypeIdentifier = "pass_type_identifier"
         case validationWebhookUrl = "validation_webhook_url"
-        case eventWebhookUrl = "event_webhook_url"
+        case webhookUrl = "webhook_url"
         case webhookSecretRaw = "webhook_secret_raw"
+        case isActive = "is_active"
+        case webhookSecret = "webhook_secret"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
 }
 
-public struct MemberListResponse: Codable, Sendable {
-    public let members: [Member]
-    public let invitations: [Invitation]
+public struct RevokeApiKeyResponse: Codable, Sendable {
+    public let id: String
+    public let isActive: Bool
+    public let message: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case isActive = "is_active"
+        case message
+    }
+}
+
+public struct DeleteApiKeyResponse: Codable, Sendable {
+    public let id: String
+    public let message: String
+}
+
+public struct AcceptInvitationResponse: Codable, Sendable {
+    public let organizationId: String
+    public let userId: String
+    public let role: OrgRole
+
+    enum CodingKeys: String, CodingKey {
+        case organizationId = "organization_id"
+        case userId = "user_id"
+        case role
+    }
+}
+
+public struct RevokeInvitationResponse: Codable, Sendable {
+    public let id: String
+    public let status: InvitationStatus
+}
+
+public struct UploadP12Response: Codable, Sendable {
+    public let message: String
+    public let certificates: [Certificate]
 }
 
 public struct TestWebhookResponse: Codable, Sendable {
+    public let webhookUrl: String
     public let success: Bool
-    public let status: Int?
-    public let body: AnyCodable?
+    public let approved: Bool
+    public let reason: String?
+    public let statusCode: Int?
+    public let durationMs: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case webhookUrl = "webhook_url"
+        case success, approved, reason
+        case statusCode = "status_code"
+        case durationMs = "duration_ms"
+    }
 }
 
 public struct ListPassesParams: Sendable {

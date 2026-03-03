@@ -1,6 +1,6 @@
 import Foundation
 
-/// Manages API keys — list, create, revoke.
+/// Manages API keys — list, create, revoke, delete.
 public struct APIKeyResource: Sendable {
     let http: HTTPClient
 
@@ -14,8 +14,25 @@ public struct APIKeyResource: Sendable {
         try await http.request(method: "POST", path: "/manage-keys", body: request)
     }
 
-    /// Revoke (delete) an API key.
-    public func revoke(_ keyId: String) async throws {
-        try await http.request(method: "DELETE", path: "/manage-keys/\(keyId)") as Void
+    /// Revoke an API key (sets is_active to false).
+    public func revoke(_ keyId: String) async throws -> RevokeApiKeyResponse {
+        try await http.request(
+            method: "PATCH",
+            path: "/manage-keys/\(keyId)",
+            body: RevokeKeyBody()
+        )
+    }
+
+    /// Permanently delete an API key.
+    public func delete(_ keyId: String) async throws -> DeleteApiKeyResponse {
+        try await http.request(method: "DELETE", path: "/manage-keys/\(keyId)")
+    }
+}
+
+private struct RevokeKeyBody: Encodable {
+    let isActive = false
+
+    enum CodingKeys: String, CodingKey {
+        case isActive = "is_active"
     }
 }

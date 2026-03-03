@@ -33,7 +33,8 @@ public enum PassFastError: Error, LocalizedError, Sendable {
 
 // MARK: - Internal error response parsing
 
-struct APIErrorBody: Decodable {
+/// Nested format: `{ "error": { "code": "...", "message": "..." } }`
+struct NestedAPIErrorBody: Decodable {
     let error: APIErrorDetail
 }
 
@@ -43,24 +44,51 @@ struct APIErrorDetail: Decodable {
     let details: AnyCodable?
 }
 
+/// Flat format: `{ "error": "...", "code": "...", "message": "..." }`
+struct FlatAPIErrorBody: Decodable {
+    let error: String
+    let code: String?
+    let message: String?
+    let details: AnyCodable?
+}
+
 func parseAPIError(statusCode: Int, data: Data) -> PassFastError {
-    guard let body = try? JSONDecoder().decode(APIErrorBody.self, from: data) else {
-        return .unknown(statusCode: statusCode, code: "unknown", message: "HTTP \(statusCode)")
+    // Try nested format first: { "error": { "code": "...", "message": "..." } }
+    if let body = try? JSONDecoder().decode(NestedAPIErrorBody.self, from: data) {
+        return mapError(
+            statusCode: statusCode,
+            code: body.error.code,
+            message: body.error.message,
+            details: body.error.details?.value
+        )
     }
 
-    let msg = body.error.message
-    let details = body.error.details?.value
+    // Fall back to flat format: { "error": "...", "message": "..." }
+    if let body = try? JSONDecoder().decode(FlatAPIErrorBody.self, from: data) {
+        let msg = body.message ?? body.error
+        let code = body.code ?? body.error
+        return mapError(
+            statusCode: statusCode,
+            code: code,
+            message: msg,
+            details: body.details?.value
+        )
+    }
 
+    return .unknown(statusCode: statusCode, code: "unknown", message: "HTTP \(statusCode)")
+}
+
+private func mapError(statusCode: Int, code: String, message: String, details: Any?) -> PassFastError {
     switch statusCode {
-    case 400: return .validation(msg, details: details)
-    case 401: return .authentication(msg)
-    case 403: return .permission(msg)
-    case 404: return .notFound(msg)
-    case 409: return .conflict(msg)
-    case 429: return .rateLimited(msg)
-    case 502: return .webhookError(msg)
+    case 400: return .validation(message, details: details)
+    case 401: return .authentication(message)
+    case 403: return .permission(message)
+    case 404: return .notFound(message)
+    case 409: return .conflict(message)
+    case 429: return .rateLimited(message)
+    case 502: return .webhookError(message)
     default:
-        if statusCode >= 500 { return .server(msg) }
-        return .unknown(statusCode: statusCode, code: body.error.code, message: msg)
+        if statusCode >= 500 { return .server(message) }
+        return .unknown(statusCode: statusCode, code: code, message: message)
     }
 }

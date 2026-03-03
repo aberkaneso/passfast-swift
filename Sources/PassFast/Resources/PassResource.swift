@@ -53,7 +53,7 @@ public struct PassResource: Sendable {
         return raw.data
     }
 
-    /// Update a pass (data, expires_at). Triggers push notification.
+    /// Update a pass (data, push_update). Triggers push notification.
     public func update(_ passId: String, _ request: UpdatePassRequest) async throws -> UpdatePassResponse {
         try await http.request(
             method: "PATCH",
@@ -62,8 +62,8 @@ public struct PassResource: Sendable {
         )
     }
 
-    /// Void a pass. Triggers push notification.
+    /// Void (invalidate) a pass. Triggers push notification.
     public func void(_ passId: String) async throws -> VoidPassResponse {
-        try await http.request(method: "DELETE", path: "/manage-passes/\(passId)")
+        try await http.request(method: "POST", path: "/manage-passes/\(passId)/void")
     }
 }

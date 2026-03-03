@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.0
 
 import PackageDescription
 
@@ -14,15 +14,23 @@ let package = Package(
             targets: ["PassFast"]
         ),
     ],
+    dependencies: [
+        .package(url: "https://github.com/swiftlang/swift-testing.git", from: "0.12.0"),
+    ],
     targets: [
         .target(
             name: "PassFast",
-            path: "Sources/PassFast"
+            path: "Sources/PassFast",
+            swiftSettings: [.swiftLanguageMode(.v5)]
         ),
         .testTarget(
             name: "PassFastTests",
-            dependencies: ["PassFast"],
-            path: "Tests/PassFastTests"
+            dependencies: [
+                "PassFast",
+                .product(name: "Testing", package: "swift-testing"),
+            ],
+            path: "Tests/PassFastTests",
+            swiftSettings: [.swiftLanguageMode(.v5)]
         ),
     ]
 )

@@ -5,9 +5,13 @@ actor HTTPClient {
     private let session: URLSession
     private let requestBuilder: RequestBuilder
 
-    init(configuration: Configuration) {
+    init(configuration: Configuration, sessionConfiguration: URLSessionConfiguration? = nil) {
         self.configuration = configuration
-        self.session = URLSession.shared
+        if let sessionConfiguration {
+            self.session = URLSession(configuration: sessionConfiguration)
+        } else {
+            self.session = URLSession.shared
+        }
         self.requestBuilder = RequestBuilder(configuration: configuration)
     }
 

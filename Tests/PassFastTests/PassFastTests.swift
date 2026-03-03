@@ -1,4 +1,5 @@
 import Testing
+import Foundation
 @testable import PassFast
 
 @Test func clientInitialization() {
@@ -58,8 +59,10 @@ import Testing
         "pkpass_storage_path": "/path/to/pass.pkpass",
         "pkpass_hash": "abc123",
         "expires_at": null,
+        "voided_at": null,
         "created_at": "2026-01-01T00:00:00Z",
-        "updated_at": "2026-01-01T00:00:00Z"
+        "updated_at": "2026-01-01T00:00:00Z",
+        "last_updated_at": null
     }
     """.data(using: .utf8)!
 
