@@ -84,6 +84,19 @@ extension AllMockTests {
             #expect(passes.isEmpty)
         }
 
+        @Test func listPassesWithDateParams() async throws {
+            MockURLProtocol.requestHandler = { request in
+                let url = request.url!.absoluteString
+                #expect(url.contains("created_after=2026-01-01"))
+                #expect(url.contains("created_before=2026-02-01"))
+                return mockResponse(json: "[]")
+            }
+
+            let params = ListPassesParams(createdAfter: "2026-01-01", createdBefore: "2026-02-01")
+            let passes = try await resource.list(params)
+            #expect(passes.isEmpty)
+        }
+
         @Test func getPass() async throws {
             MockURLProtocol.requestHandler = { request in
                 #expect(request.httpMethod == "GET")

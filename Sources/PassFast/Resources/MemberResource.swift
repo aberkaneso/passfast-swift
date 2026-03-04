@@ -31,11 +31,11 @@ public struct MemberResource: Sendable {
 
     /// Change a member's role.
     public func changeRole(_ userId: String, _ request: ChangeRoleRequest) async throws -> Member {
-        try await http.request(method: "PATCH", path: "/manage-members/\(userId)/role", body: request)
+        try await http.request(method: "PATCH", path: "/manage-members/\(userId)", body: request)
     }
 
     /// Remove a member from the organization.
-    public func remove(_ userId: String) async throws {
-        try await http.request(method: "DELETE", path: "/manage-members/\(userId)") as Void
+    public func remove(_ userId: String) async throws -> RemoveMemberResponse {
+        try await http.request(method: "DELETE", path: "/manage-members/\(userId)")
     }
 }

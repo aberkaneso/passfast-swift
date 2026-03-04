@@ -1,6 +1,19 @@
+# macOS
 .DS_Store
+._*
+
+# Swift Package Manager
 .build/
 .swiftpm/
+Package.resolved
+
+# Xcode
 *.xcodeproj/
 xcuserdata/
 DerivedData/
+*.xcscmblueprint
+*.xccheckout
+
+# Environment
+.env
+.env.*

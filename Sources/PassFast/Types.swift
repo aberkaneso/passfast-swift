@@ -357,6 +357,30 @@ public struct WebhookEvent: Codable, Identifiable, Sendable {
     }
 }
 
+public struct PassLocation: Codable, Sendable {
+    public let latitude: Double
+    public let longitude: Double
+    public var altitude: Double?
+    public var relevantText: String?
+
+    public init(
+        latitude: Double,
+        longitude: Double,
+        altitude: Double? = nil,
+        relevantText: String? = nil
+    ) {
+        self.latitude = latitude
+        self.longitude = longitude
+        self.altitude = altitude
+        self.relevantText = relevantText
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case latitude, longitude, altitude
+        case relevantText = "relevant_text"
+    }
+}
+
 // MARK: - Request Types
 
 public struct GeneratePassRequest: Encodable, Sendable {
@@ -366,6 +390,9 @@ public struct GeneratePassRequest: Encodable, Sendable {
     public var externalId: String?
     public var expiresAt: String?
     public var getOrCreate: Bool?
+    public var locations: [PassLocation]?
+    public var relevantDate: String?
+    public var maxDistance: Double?
 
     public init(
         templateId: String,
@@ -373,7 +400,10 @@ public struct GeneratePassRequest: Encodable, Sendable {
         data: [String: AnyCodable],
         externalId: String? = nil,
         expiresAt: String? = nil,
-        getOrCreate: Bool? = nil
+        getOrCreate: Bool? = nil,
+        locations: [PassLocation]? = nil,
+        relevantDate: String? = nil,
+        maxDistance: Double? = nil
     ) {
         self.templateId = templateId
         self.serialNumber = serialNumber
@@ -381,6 +411,9 @@ public struct GeneratePassRequest: Encodable, Sendable {
         self.externalId = externalId
         self.expiresAt = expiresAt
         self.getOrCreate = getOrCreate
+        self.locations = locations
+        self.relevantDate = relevantDate
+        self.maxDistance = maxDistance
     }
 
     enum CodingKeys: String, CodingKey {
@@ -390,21 +423,39 @@ public struct GeneratePassRequest: Encodable, Sendable {
         case externalId = "external_id"
         case expiresAt = "expires_at"
         case getOrCreate = "get_or_create"
+        case locations
+        case relevantDate = "relevant_date"
+        case maxDistance = "max_distance"
     }
 }
 
 public struct UpdatePassRequest: Encodable, Sendable {
-    public let data: [String: AnyCodable]
+    public var data: [String: AnyCodable]?
     public var pushUpdate: Bool?
+    public var locations: [PassLocation]?
+    public var relevantDate: String?
+    public var maxDistance: Double?
 
-    public init(data: [String: AnyCodable], pushUpdate: Bool? = nil) {
+    public init(
+        data: [String: AnyCodable]? = nil,
+        pushUpdate: Bool? = nil,
+        locations: [PassLocation]? = nil,
+        relevantDate: String? = nil,
+        maxDistance: Double? = nil
+    ) {
         self.data = data
         self.pushUpdate = pushUpdate
+        self.locations = locations
+        self.relevantDate = relevantDate
+        self.maxDistance = maxDistance
     }
 
     enum CodingKeys: String, CodingKey {
         case data
         case pushUpdate = "push_update"
+        case locations
+        case relevantDate = "relevant_date"
+        case maxDistance = "max_distance"
     }
 }
 
@@ -735,6 +786,11 @@ public struct AcceptInvitationResponse: Codable, Sendable {
     }
 }
 
+public struct RemoveMemberResponse: Codable, Sendable {
+    public let id: String
+    public let removed: Bool
+}
+
 public struct RevokeInvitationResponse: Codable, Sendable {
     public let id: String
     public let status: InvitationStatus
@@ -768,6 +824,8 @@ public struct ListPassesParams: Sendable {
     public var templateId: String?
     public var limit: Int?
     public var offset: Int?
+    public var createdAfter: String?
+    public var createdBefore: String?
 
     public init(
         status: PassStatus? = nil,
@@ -775,7 +833,9 @@ public struct ListPassesParams: Sendable {
         externalId: String? = nil,
         templateId: String? = nil,
         limit: Int? = nil,
-        offset: Int? = nil
+        offset: Int? = nil,
+        createdAfter: String? = nil,
+        createdBefore: String? = nil
     ) {
         self.status = status
         self.serialNumber = serialNumber
@@ -783,6 +843,8 @@ public struct ListPassesParams: Sendable {
         self.templateId = templateId
         self.limit = limit
         self.offset = offset
+        self.createdAfter = createdAfter
+        self.createdBefore = createdBefore
     }
 
     var queryItems: [URLQueryItem] {
@@ -793,6 +855,8 @@ public struct ListPassesParams: Sendable {
         if let templateId { items.append(.init(name: "template_id", value: templateId)) }
         if let limit { items.append(.init(name: "limit", value: String(limit))) }
         if let offset { items.append(.init(name: "offset", value: String(offset))) }
+        if let createdAfter { items.append(.init(name: "created_after", value: createdAfter)) }
+        if let createdBefore { items.append(.init(name: "created_before", value: createdBefore)) }
         return items
     }
 }

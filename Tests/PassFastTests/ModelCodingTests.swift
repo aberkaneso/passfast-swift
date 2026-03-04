@@ -268,6 +268,42 @@ struct ModelCodingTests {
         #expect(evt.attempts == 1)
     }
 
+    // MARK: - PassLocation
+
+    @Test func passLocationRoundTrip() throws {
+        let location = PassLocation(latitude: 37.7749, longitude: -122.4194, altitude: 10.0, relevantText: "Near HQ")
+        let data = try JSONEncoder().encode(location)
+        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        #expect(json["latitude"] as? Double == 37.7749)
+        #expect(json["longitude"] as? Double == -122.4194)
+        #expect(json["altitude"] as? Double == 10.0)
+        #expect(json["relevant_text"] as? String == "Near HQ")
+
+        let decoded = try JSONDecoder().decode(PassLocation.self, from: data)
+        #expect(decoded.latitude == 37.7749)
+        #expect(decoded.longitude == -122.4194)
+        #expect(decoded.altitude == 10.0)
+        #expect(decoded.relevantText == "Near HQ")
+    }
+
+    @Test func passLocationMinimalFields() throws {
+        let json = #"{"latitude": 40.0, "longitude": -74.0}"#.data(using: .utf8)!
+        let location = try JSONDecoder().decode(PassLocation.self, from: json)
+        #expect(location.latitude == 40.0)
+        #expect(location.longitude == -74.0)
+        #expect(location.altitude == nil)
+        #expect(location.relevantText == nil)
+    }
+
+    // MARK: - RemoveMemberResponse
+
+    @Test func removeMemberResponseDecoding() throws {
+        let json = #"{"id":"u-1","removed":true}"#.data(using: .utf8)!
+        let resp = try JSONDecoder().decode(RemoveMemberResponse.self, from: json)
+        #expect(resp.id == "u-1")
+        #expect(resp.removed == true)
+    }
+
     // MARK: - Request Encoding
 
     @Test func generatePassRequestEncoding() throws {
@@ -284,6 +320,24 @@ struct ModelCodingTests {
         #expect(json["serial_number"] as? String == "SN-001")
         #expect(json["external_id"] as? String == "ext-1")
         #expect(json["get_or_create"] as? Bool == true)
+    }
+
+    @Test func generatePassRequestWithLocationFields() throws {
+        let req = GeneratePassRequest(
+            templateId: "tmpl-1",
+            serialNumber: "SN-001",
+            data: ["name": "Jane"],
+            locations: [PassLocation(latitude: 37.33, longitude: -122.03)],
+            relevantDate: "2026-06-15T09:00:00Z",
+            maxDistance: 500.0
+        )
+        let data = try JSONEncoder().encode(req)
+        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        #expect(json["relevant_date"] as? String == "2026-06-15T09:00:00Z")
+        #expect(json["max_distance"] as? Double == 500.0)
+        let locations = json["locations"] as? [[String: Any]]
+        #expect(locations?.count == 1)
+        #expect(locations?[0]["latitude"] as? Double == 37.33)
     }
 
     @Test func createTemplateRequestEncoding() throws {
@@ -314,6 +368,30 @@ struct ModelCodingTests {
         #expect(json["data"] != nil)
     }
 
+    @Test func updatePassRequestWithLocationFields() throws {
+        let req = UpdatePassRequest(
+            locations: [PassLocation(latitude: 51.5, longitude: -0.12, relevantText: "London")],
+            relevantDate: "2026-12-25T00:00:00Z",
+            maxDistance: 1000.0
+        )
+        let data = try JSONEncoder().encode(req)
+        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        #expect(json["data"] == nil)
+        #expect(json["relevant_date"] as? String == "2026-12-25T00:00:00Z")
+        #expect(json["max_distance"] as? Double == 1000.0)
+        let locations = json["locations"] as? [[String: Any]]
+        #expect(locations?.count == 1)
+        #expect(locations?[0]["relevant_text"] as? String == "London")
+    }
+
+    @Test func updatePassRequestOptionalData() throws {
+        let req = UpdatePassRequest(data: nil, pushUpdate: true)
+        let data = try JSONEncoder().encode(req)
+        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        #expect(json["push_update"] as? Bool == true)
+        #expect(json["data"] == nil)
+    }
+
     @Test func updatePassResponseDecoding() throws {
         let json = """
         {
@@ -327,6 +405,26 @@ struct ModelCodingTests {
         #expect(resp.id == "pass-1")
         #expect(resp.status == .active)
         #expect(resp.devicesNotified == 3)
+    }
+
+    @Test func listPassesParamsWithDateFilters() throws {
+        let params = ListPassesParams(
+            status: .active,
+            createdAfter: "2026-01-01T00:00:00Z",
+            createdBefore: "2026-02-01T00:00:00Z"
+        )
+        let items = params.queryItems
+        #expect(items.contains { $0.name == "status" && $0.value == "active" })
+        #expect(items.contains { $0.name == "created_after" && $0.value == "2026-01-01T00:00:00Z" })
+        #expect(items.contains { $0.name == "created_before" && $0.value == "2026-02-01T00:00:00Z" })
+    }
+
+    @Test func listPassesParamsDateFiltersOmittedWhenNil() throws {
+        let params = ListPassesParams(limit: 10)
+        let items = params.queryItems
+        #expect(!items.contains { $0.name == "created_after" })
+        #expect(!items.contains { $0.name == "created_before" })
+        #expect(items.contains { $0.name == "limit" && $0.value == "10" })
     }
 
     @Test func voidPassResponseDecoding() throws {

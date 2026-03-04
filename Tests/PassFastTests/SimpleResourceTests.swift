@@ -279,7 +279,8 @@ extension AllMockTests {
             let responseJSON = #"{"id":"m-1","user_id":"u-1","email":"a@b.com","role":"admin","created_at":"2026-01-01T00:00:00Z"}"#
             MockURLProtocol.requestHandler = { request in
                 #expect(request.httpMethod == "PATCH")
-                #expect(request.url?.path.hasSuffix("/manage-members/u-1/role") == true)
+                #expect(request.url?.path.hasSuffix("/manage-members/u-1") == true)
+                #expect(request.url?.path.hasSuffix("/manage-members/u-1/role") == false)
                 return mockResponse(json: responseJSON)
             }
 
@@ -288,13 +289,16 @@ extension AllMockTests {
         }
 
         @Test func removeMember() async throws {
+            let responseJSON = #"{"id":"u-1","removed":true}"#
             MockURLProtocol.requestHandler = { request in
                 #expect(request.httpMethod == "DELETE")
                 #expect(request.url?.path.hasSuffix("/manage-members/u-1") == true)
-                return mockResponse(statusCode: 200, data: Data())
+                return mockResponse(json: responseJSON)
             }
 
-            try await MemberResource(http: http).remove("u-1")
+            let result = try await MemberResource(http: http).remove("u-1")
+            #expect(result.id == "u-1")
+            #expect(result.removed == true)
         }
 
         // MARK: - Webhook Events
