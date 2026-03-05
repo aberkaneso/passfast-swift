@@ -16,16 +16,18 @@ public struct APIKeyResource: Sendable {
 
     /// Revoke an API key (sets is_active to false).
     public func revoke(_ keyId: String) async throws -> RevokeApiKeyResponse {
-        try await http.request(
+        let safeId = try RequestBuilder.sanitizePathComponent(keyId)
+        return try await http.request(
             method: "PATCH",
-            path: "/manage-keys/\(keyId)",
+            path: "/manage-keys/\(safeId)",
             body: RevokeKeyBody()
         )
     }
 
     /// Permanently delete an API key.
     public func delete(_ keyId: String) async throws -> DeleteApiKeyResponse {
-        try await http.request(method: "DELETE", path: "/manage-keys/\(keyId)")
+        let safeId = try RequestBuilder.sanitizePathComponent(keyId)
+        return try await http.request(method: "DELETE", path: "/manage-keys/\(safeId)")
     }
 }
 

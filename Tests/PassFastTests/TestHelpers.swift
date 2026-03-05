@@ -10,7 +10,7 @@ func makeTestHTTPClient(
 ) -> HTTPClient {
     let config = Configuration(
         apiKey: apiKey,
-        baseURL: baseURL,
+        baseURL: baseURL ?? Configuration.defaultBaseURL,
         orgId: orgId,
         appId: appId,
         timeoutInterval: timeoutInterval

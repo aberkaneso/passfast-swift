@@ -1,11 +1,20 @@
 import Foundation
 
+/// Maximum length for server-provided error messages to prevent sensitive data leakage.
+private let maxErrorMessageLength = 500
+
+/// Truncates a server error message to a safe length.
+func sanitizeErrorMessage(_ message: String) -> String {
+    if message.count <= maxErrorMessageLength { return message }
+    return String(message.prefix(maxErrorMessageLength)) + "..."
+}
+
 /// Error returned by the PassFast API.
 public enum PassFastError: Error, LocalizedError, Sendable {
     case authentication(String)
     case permission(String)
     case notFound(String)
-    case validation(String, details: Any?)
+    case validation(String, details: AnyCodable?)
     case conflict(String)
     case rateLimited(String)
     case webhookError(String)
@@ -59,7 +68,7 @@ func parseAPIError(statusCode: Int, data: Data) -> PassFastError {
             statusCode: statusCode,
             code: body.error.code,
             message: body.error.message,
-            details: body.error.details?.value
+            details: body.error.details
         )
     }
 
@@ -71,24 +80,25 @@ func parseAPIError(statusCode: Int, data: Data) -> PassFastError {
             statusCode: statusCode,
             code: code,
             message: msg,
-            details: body.details?.value
+            details: body.details
         )
     }
 
     return .unknown(statusCode: statusCode, code: "unknown", message: "HTTP \(statusCode)")
 }
 
-private func mapError(statusCode: Int, code: String, message: String, details: Any?) -> PassFastError {
+private func mapError(statusCode: Int, code: String, message: String, details: AnyCodable?) -> PassFastError {
+    let msg = sanitizeErrorMessage(message)
     switch statusCode {
-    case 400: return .validation(message, details: details)
-    case 401: return .authentication(message)
-    case 403: return .permission(message)
-    case 404: return .notFound(message)
-    case 409: return .conflict(message)
-    case 429: return .rateLimited(message)
-    case 502: return .webhookError(message)
+    case 400: return .validation(msg, details: details)
+    case 401: return .authentication(msg)
+    case 403: return .permission(msg)
+    case 404: return .notFound(msg)
+    case 409: return .conflict(msg)
+    case 429: return .rateLimited(msg)
+    case 502: return .webhookError(msg)
     default:
-        if statusCode >= 500 { return .server(message) }
-        return .unknown(statusCode: statusCode, code: code, message: message)
+        if statusCode >= 500 { return .server(msg) }
+        return .unknown(statusCode: statusCode, code: code, message: msg)
     }
 }

@@ -20,13 +20,15 @@ public struct PassSheet: UIViewControllerRepresentable {
         self.onDismiss = onDismiss
     }
 
-    public func makeUIViewController(context: Context) -> PKAddPassesViewController {
-        let controller = PKAddPassesViewController(pass: pass)!
+    public func makeUIViewController(context: Context) -> UIViewController {
+        guard let controller = PKAddPassesViewController(pass: pass) else {
+            return UIViewController()
+        }
         controller.delegate = context.coordinator
         return controller
     }
 
-    public func updateUIViewController(_ uiViewController: PKAddPassesViewController, context: Context) {}
+    public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
 
     public func makeCoordinator() -> Coordinator {
         Coordinator(onDismiss: onDismiss)

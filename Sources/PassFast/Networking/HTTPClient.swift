@@ -7,11 +7,7 @@ actor HTTPClient {
 
     init(configuration: Configuration, sessionConfiguration: URLSessionConfiguration? = nil) {
         self.configuration = configuration
-        if let sessionConfiguration {
-            self.session = URLSession(configuration: sessionConfiguration)
-        } else {
-            self.session = URLSession.shared
-        }
+        self.session = URLSession(configuration: sessionConfiguration ?? .ephemeral)
         self.requestBuilder = RequestBuilder(configuration: configuration)
     }
 

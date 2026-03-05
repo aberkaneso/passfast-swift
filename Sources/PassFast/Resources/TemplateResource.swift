@@ -16,21 +16,25 @@ public struct TemplateResource: Sendable {
 
     /// Get a single template by ID.
     public func get(_ templateId: String) async throws -> Template {
-        try await http.request(method: "GET", path: "/manage-templates/\(templateId)")
+        let safeId = try RequestBuilder.sanitizePathComponent(templateId)
+        return try await http.request(method: "GET", path: "/manage-templates/\(safeId)")
     }
 
     /// Update a template.
     public func update(_ templateId: String, _ request: UpdateTemplateRequest) async throws -> Template {
-        try await http.request(method: "PATCH", path: "/manage-templates/\(templateId)", body: request)
+        let safeId = try RequestBuilder.sanitizePathComponent(templateId)
+        return try await http.request(method: "PATCH", path: "/manage-templates/\(safeId)", body: request)
     }
 
     /// Delete a template.
     public func delete(_ templateId: String) async throws {
-        try await http.request(method: "DELETE", path: "/manage-templates/\(templateId)") as Void
+        let safeId = try RequestBuilder.sanitizePathComponent(templateId)
+        try await http.request(method: "DELETE", path: "/manage-templates/\(safeId)") as Void
     }
 
     /// Publish a template (makes it available for pass generation).
     public func publish(_ templateId: String) async throws -> Template {
-        try await http.request(method: "POST", path: "/manage-templates/\(templateId)/publish")
+        let safeId = try RequestBuilder.sanitizePathComponent(templateId)
+        return try await http.request(method: "POST", path: "/manage-templates/\(safeId)/publish")
     }
 }

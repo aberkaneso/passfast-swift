@@ -41,29 +41,33 @@ public struct PassResource: Sendable {
 
     /// Get a single pass by ID.
     public func get(_ passId: String) async throws -> Pass {
-        try await http.request(method: "GET", path: "/manage-passes/\(passId)")
+        let safeId = try RequestBuilder.sanitizePathComponent(passId)
+        return try await http.request(method: "GET", path: "/manage-passes/\(safeId)")
     }
 
     /// Download the .pkpass binary for a pass.
     public func download(_ passId: String) async throws -> Data {
+        let safeId = try RequestBuilder.sanitizePathComponent(passId)
         let raw = try await http.requestRaw(
             method: "GET",
-            path: "/manage-passes/\(passId)/download"
+            path: "/manage-passes/\(safeId)/download"
         )
         return raw.data
     }
 
     /// Update a pass (data, push_update). Triggers push notification.
     public func update(_ passId: String, _ request: UpdatePassRequest) async throws -> UpdatePassResponse {
-        try await http.request(
+        let safeId = try RequestBuilder.sanitizePathComponent(passId)
+        return try await http.request(
             method: "PATCH",
-            path: "/manage-passes/\(passId)",
+            path: "/manage-passes/\(safeId)",
             body: request
         )
     }
 
     /// Void (invalidate) a pass. Triggers push notification.
     public func void(_ passId: String) async throws -> VoidPassResponse {
-        try await http.request(method: "POST", path: "/manage-passes/\(passId)/void")
+        let safeId = try RequestBuilder.sanitizePathComponent(passId)
+        return try await http.request(method: "POST", path: "/manage-passes/\(safeId)/void")
     }
 }

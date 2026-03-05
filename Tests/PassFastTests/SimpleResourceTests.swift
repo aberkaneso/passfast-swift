@@ -45,7 +45,7 @@ extension AllMockTests {
             }
 
             let result = try await ImageResource(http: http).upload(
-                UploadImageRequest(purpose: "logo", filename: "logo.png", data: "base64data")
+                UploadImageRequest(purpose: "logo", filename: "logo.png", data: "aW1hZ2VkYXRh")
             )
             #expect(result.id == "img-2")
             #expect(result.purpose == "logo")
@@ -129,7 +129,7 @@ extension AllMockTests {
             }
 
             let result = try await CertificateResource(http: http).uploadP12(
-                UploadP12Request(p12Data: "base64p12", password: "secret")
+                UploadP12Request(p12Data: "cDEyZGF0YQ==", password: "secret")
             )
             #expect(result.certificates.count == 1)
             #expect(result.message.contains("successfully"))

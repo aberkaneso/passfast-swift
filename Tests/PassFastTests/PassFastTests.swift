@@ -4,14 +4,15 @@ import Foundation
 
 @Test func clientInitialization() {
     let client = PassFastClient(apiKey: "sk_live_test")
-    #expect(client.passes != nil)
-    #expect(client.templates != nil)
-    #expect(client.images != nil)
-    #expect(client.certificates != nil)
-    #expect(client.organization != nil)
-    #expect(client.apiKeys != nil)
-    #expect(client.members != nil)
-    #expect(client.webhookEvents != nil)
+    // Verify all resources are accessible (non-optional properties, so just access them)
+    _ = client.passes
+    _ = client.templates
+    _ = client.images
+    _ = client.certificates
+    _ = client.organization
+    _ = client.apiKeys
+    _ = client.members
+    _ = client.webhookEvents
 }
 
 @Test func anyCodableString() throws {

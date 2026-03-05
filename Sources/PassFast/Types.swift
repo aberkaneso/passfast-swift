@@ -191,7 +191,7 @@ public struct Certificate: Codable, Identifiable, Sendable {
     }
 }
 
-public struct Organization: Codable, Identifiable, Sendable {
+public struct Organization: Codable, Identifiable, Sendable, CustomStringConvertible {
     public let id: String
     public let name: String
     public let slug: String?
@@ -215,9 +215,13 @@ public struct Organization: Codable, Identifiable, Sendable {
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
+
+    public var description: String {
+        "Organization(id: \(id), name: \(name), webhookSecret: [REDACTED])"
+    }
 }
 
-public struct App: Codable, Identifiable, Sendable {
+public struct App: Codable, Identifiable, Sendable, CustomStringConvertible {
     public let id: String
     public let organizationId: String
     public let name: String
@@ -242,6 +246,10 @@ public struct App: Codable, Identifiable, Sendable {
         case webhookSecret = "webhook_secret"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+    }
+
+    public var description: String {
+        "App(id: \(id), name: \(name), webhookSecret: [REDACTED])"
     }
 }
 
@@ -271,7 +279,7 @@ public struct ApiKey: Codable, Identifiable, Sendable {
     }
 }
 
-public struct ApiKeyCreated: Codable, Sendable {
+public struct ApiKeyCreated: Codable, Sendable, CustomStringConvertible {
     public let id: String
     public let organizationId: String
     public let name: String
@@ -294,6 +302,10 @@ public struct ApiKeyCreated: Codable, Sendable {
         case expiresAt = "expires_at"
         case isActive = "is_active"
         case createdAt = "created_at"
+    }
+
+    public var description: String {
+        "ApiKeyCreated(id: \(id), name: \(name), keyPrefix: \(keyPrefix), rawKey: [REDACTED])"
     }
 }
 
@@ -667,7 +679,7 @@ public struct UploadCertificateRequest: Encodable, Sendable {
     }
 }
 
-public struct UploadP12Request: Encodable, Sendable {
+public struct UploadP12Request: Encodable, Sendable, CustomStringConvertible {
     public let p12Data: String
     public var password: String?
 
@@ -679,6 +691,10 @@ public struct UploadP12Request: Encodable, Sendable {
     enum CodingKeys: String, CodingKey {
         case p12Data = "p12_data"
         case password
+    }
+
+    public var description: String {
+        "UploadP12Request(p12Data: [\(p12Data.count) chars], password: [REDACTED])"
     }
 }
 
@@ -727,7 +743,7 @@ public struct VoidPassResponse: Codable, Sendable {
     }
 }
 
-public struct UpdateAppResponse: Codable, Sendable {
+public struct UpdateAppResponse: Codable, Sendable, CustomStringConvertible {
     public let id: String
     public let organizationId: String
     public let name: String
@@ -754,6 +770,10 @@ public struct UpdateAppResponse: Codable, Sendable {
         case webhookSecret = "webhook_secret"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+    }
+
+    public var description: String {
+        "UpdateAppResponse(id: \(id), name: \(name), webhookSecretRaw: [REDACTED], webhookSecret: [REDACTED])"
     }
 }
 

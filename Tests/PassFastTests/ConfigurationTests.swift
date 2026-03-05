@@ -9,12 +9,6 @@ struct ConfigurationTests {
         #expect(config.baseURL.absoluteString.contains("supabase.co"))
     }
 
-    @Test func customBaseURL() {
-        let url = URL(string: "https://custom.api.com")!
-        let config = Configuration(apiKey: "test", baseURL: url)
-        #expect(config.baseURL == url)
-    }
-
     @Test func defaultTimeout() {
         let config = Configuration(apiKey: "test")
         #expect(config.timeoutInterval == 30)

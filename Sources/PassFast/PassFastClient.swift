@@ -32,20 +32,17 @@ public final class PassFastClient: Sendable {
     ///
     /// - Parameters:
     ///   - apiKey: Your `sk_live_` (server) or `pk_live_` (client) API key.
-    ///   - baseURL: Custom API base URL. Defaults to the hosted PassFast instance.
     ///   - orgId: Organization ID. Required for JWT auth, optional for API keys.
     ///   - appId: App ID. Required if the org has multiple apps.
     ///   - timeoutInterval: Request timeout in seconds. Defaults to 30.
     public init(
         apiKey: String,
-        baseURL: URL? = nil,
         orgId: String? = nil,
         appId: String? = nil,
         timeoutInterval: TimeInterval = 30
     ) {
         let config = Configuration(
             apiKey: apiKey,
-            baseURL: baseURL,
             orgId: orgId,
             appId: appId,
             timeoutInterval: timeoutInterval

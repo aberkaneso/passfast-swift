@@ -45,7 +45,6 @@ PassSheet(pass: pass)
 ```swift
 let client = PassFastClient(
     apiKey: "sk_live_...",
-    baseURL: URL(string: "https://your-instance.supabase.co/functions/v1"), // custom
     orgId: "org-...",   // required for JWT auth
     appId: "app-...",   // required if org has multiple apps
     timeoutInterval: 15 // seconds (default: 30)

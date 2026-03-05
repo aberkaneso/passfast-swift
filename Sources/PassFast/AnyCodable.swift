@@ -1,7 +1,7 @@
 import Foundation
 
 /// A type-erased `Codable` value for handling arbitrary JSON (e.g. `dynamic_data`).
-public struct AnyCodable: Codable, Equatable, Hashable, Sendable, CustomStringConvertible {
+public struct AnyCodable: Codable, Equatable, Hashable, @unchecked Sendable, CustomStringConvertible {
     public let value: Any
 
     public init(_ value: Any) {
@@ -54,11 +54,48 @@ public struct AnyCodable: Codable, Equatable, Hashable, Sendable, CustomStringCo
     }
 
     public static func == (lhs: AnyCodable, rhs: AnyCodable) -> Bool {
-        String(describing: lhs.value) == String(describing: rhs.value)
+        switch (lhs.value, rhs.value) {
+        case is (NSNull, NSNull):
+            return true
+        case let (l as Bool, r as Bool):
+            return l == r
+        case let (l as Int, r as Int):
+            return l == r
+        case let (l as Double, r as Double):
+            return l == r
+        case let (l as String, r as String):
+            return l == r
+        case let (l as [Any], r as [Any]):
+            return l.count == r.count && zip(l, r).allSatisfy { AnyCodable($0) == AnyCodable($1) }
+        case let (l as [String: Any], r as [String: Any]):
+            return l.count == r.count && l.allSatisfy { key, val in
+                r[key].map { AnyCodable(val) == AnyCodable($0) } ?? false
+            }
+        default:
+            return false
+        }
     }
 
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(String(describing: value))
+        switch value {
+        case is NSNull:
+            hasher.combine(0)
+        case let bool as Bool:
+            hasher.combine(1)
+            hasher.combine(bool)
+        case let int as Int:
+            hasher.combine(2)
+            hasher.combine(int)
+        case let double as Double:
+            hasher.combine(3)
+            hasher.combine(double)
+        case let string as String:
+            hasher.combine(4)
+            hasher.combine(string)
+        default:
+            hasher.combine(5)
+            hasher.combine(String(describing: value))
+        }
     }
 
     public var description: String {
