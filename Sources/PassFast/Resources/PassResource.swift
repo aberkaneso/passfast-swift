@@ -70,4 +70,35 @@ public struct PassResource: Sendable {
         let safeId = try RequestBuilder.sanitizePathComponent(passId)
         return try await http.request(method: "POST", path: "/manage-passes/\(safeId)/void")
     }
+
+    /// Delete a pass by ID.
+    public func delete(_ passId: String) async throws -> DeletePassResponse {
+        let safeId = try RequestBuilder.sanitizePathComponent(passId)
+        return try await http.request(method: "DELETE", path: "/manage-passes/\(safeId)")
+    }
+
+    /// Get a pass by serial number.
+    public func getBySerial(_ serialNumber: String) async throws -> Pass {
+        let safeSN = try RequestBuilder.sanitizePathComponent(serialNumber)
+        return try await http.request(method: "GET", path: "/manage-passes/serial/\(safeSN)")
+    }
+
+    /// Update a pass by serial number.
+    public func updateBySerial(_ serialNumber: String, _ request: UpdatePassRequest) async throws -> UpdatePassResponse {
+        let safeSN = try RequestBuilder.sanitizePathComponent(serialNumber)
+        return try await http.request(method: "PATCH", path: "/manage-passes/serial/\(safeSN)", body: request)
+    }
+
+    /// Delete a pass by serial number.
+    public func deleteBySerial(_ serialNumber: String) async throws -> DeletePassResponse {
+        let safeSN = try RequestBuilder.sanitizePathComponent(serialNumber)
+        return try await http.request(method: "DELETE", path: "/manage-passes/serial/\(safeSN)")
+    }
+
+    /// Download the .pkpass binary by serial number.
+    public func downloadBySerial(_ serialNumber: String) async throws -> Data {
+        let safeSN = try RequestBuilder.sanitizePathComponent(serialNumber)
+        let raw = try await http.requestRaw(method: "GET", path: "/manage-passes/serial/\(safeSN)/download")
+        return raw.data
+    }
 }

@@ -55,7 +55,7 @@ public final class PassFastClient: Sendable {
         self.certificates = CertificateResource(http: http)
         self.organization = OrganizationResource(http: http)
         self.apiKeys = APIKeyResource(http: http)
-        self.members = MemberResource(http: http)
+        self.members = MemberResource(http: http, orgId: config.orgId)
         self.webhookEvents = WebhookEventResource(http: http)
     }
 }

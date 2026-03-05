@@ -17,13 +17,15 @@ actor HTTPClient {
         method: String,
         path: String,
         queryItems: [URLQueryItem]? = nil,
-        body: (any Encodable)? = nil
+        body: (any Encodable)? = nil,
+        additionalHeaders: [String: String]? = nil
     ) async throws -> T {
         let urlRequest = try requestBuilder.buildRequest(
             method: method,
             path: path,
             queryItems: queryItems,
-            body: body
+            body: body,
+            additionalHeaders: additionalHeaders
         )
 
         let (data, response) = try await perform(urlRequest)
@@ -50,13 +52,15 @@ actor HTTPClient {
         method: String,
         path: String,
         queryItems: [URLQueryItem]? = nil,
-        body: (any Encodable)? = nil
+        body: (any Encodable)? = nil,
+        additionalHeaders: [String: String]? = nil
     ) async throws {
         let urlRequest = try requestBuilder.buildRequest(
             method: method,
             path: path,
             queryItems: queryItems,
-            body: body
+            body: body,
+            additionalHeaders: additionalHeaders
         )
 
         let (data, response) = try await perform(urlRequest)
@@ -81,13 +85,15 @@ actor HTTPClient {
         method: String,
         path: String,
         queryItems: [URLQueryItem]? = nil,
-        body: (any Encodable)? = nil
+        body: (any Encodable)? = nil,
+        additionalHeaders: [String: String]? = nil
     ) async throws -> RawResponse {
         let urlRequest = try requestBuilder.buildRequest(
             method: method,
             path: path,
             queryItems: queryItems,
-            body: body
+            body: body,
+            additionalHeaders: additionalHeaders
         )
 
         let (data, response) = try await perform(urlRequest)

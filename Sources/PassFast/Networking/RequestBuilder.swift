@@ -41,9 +41,6 @@ struct RequestBuilder {
         request.timeoutInterval = configuration.timeoutInterval
         request.setValue("Bearer \(configuration.apiKey)", forHTTPHeaderField: "Authorization")
 
-        if let orgId = configuration.orgId {
-            request.setValue(orgId, forHTTPHeaderField: "X-Org-Id")
-        }
         if let appId = configuration.appId {
             request.setValue(appId, forHTTPHeaderField: "X-App-Id")
         }

@@ -19,11 +19,6 @@ public struct OrganizationResource: Sendable {
         try await http.request(method: "GET", path: "/manage-org/app")
     }
 
-    /// List all apps in the organization.
-    public func listApps() async throws -> [App] {
-        try await http.request(method: "GET", path: "/manage-org/app")
-    }
-
     /// Create a new app.
     public func createApp(_ request: CreateAppRequest) async throws -> App {
         try await http.request(method: "POST", path: "/manage-org/app", body: request)

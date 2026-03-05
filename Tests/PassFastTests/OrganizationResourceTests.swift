@@ -59,17 +59,6 @@ extension AllMockTests {
             #expect(app.name == "My App")
         }
 
-        @Test func listApps() async throws {
-            MockURLProtocol.requestHandler = { request in
-                #expect(request.url?.path.hasSuffix("/manage-org/app") == true)
-                return mockResponse(json: "[\(appJSON)]")
-            }
-
-            let apps = try await resource.listApps()
-            #expect(apps.count == 1)
-            #expect(apps[0].name == "My App")
-        }
-
         @Test func createApp() async throws {
             MockURLProtocol.requestHandler = { request in
                 #expect(request.httpMethod == "POST")

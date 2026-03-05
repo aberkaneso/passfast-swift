@@ -146,7 +146,6 @@ struct ModelCodingTests {
         let json = """
         {
             "id": "key-1",
-            "organization_id": "org-1",
             "name": "Production",
             "key_type": "secret",
             "key_prefix": "sk_live_",
@@ -168,7 +167,6 @@ struct ModelCodingTests {
         let json = """
         {
             "id": "key-1",
-            "organization_id": "org-1",
             "name": "New Key",
             "key_type": "publishable",
             "key_prefix": "pk_live_",
@@ -228,11 +226,6 @@ struct ModelCodingTests {
             "organization_id": "org-1",
             "app_id": "app-1",
             "cert_type": "signer_cert",
-            "filename": "cert.pem",
-            "subject": "CN=PassFast",
-            "issuer": "Apple",
-            "valid_from": "2025-01-01",
-            "valid_to": "2026-01-01",
             "is_active": true,
             "created_at": "2026-01-01T00:00:00Z",
             "updated_at": "2026-01-02T00:00:00Z"
@@ -241,7 +234,6 @@ struct ModelCodingTests {
         let cert = try JSONDecoder().decode(Certificate.self, from: json)
         #expect(cert.certType == .signerCert)
         #expect(cert.isActive == true)
-        #expect(cert.subject == "CN=PassFast")
         #expect(cert.updatedAt == "2026-01-02T00:00:00Z")
     }
 
@@ -249,13 +241,10 @@ struct ModelCodingTests {
         let json = """
         {
             "id": "evt-1",
-            "organization_id": "org-1",
-            "app_id": "app-1",
             "event_type": "pass.created",
             "payload": {"pass_id": "pass-1"},
             "delivery_status": "delivered",
             "attempts": 1,
-            "last_attempt_at": "2026-01-01T00:00:00Z",
             "delivered_at": "2026-01-01T00:00:00Z",
             "next_retry_at": null,
             "last_error": null,
@@ -425,6 +414,30 @@ struct ModelCodingTests {
         #expect(!items.contains { $0.name == "created_after" })
         #expect(!items.contains { $0.name == "created_before" })
         #expect(items.contains { $0.name == "limit" && $0.value == "10" })
+    }
+
+    @Test func deletePassResponseDecoding() throws {
+        let json = #"{"id":"pass-1","serial_number":"SN-001","deleted":true}"#.data(using: .utf8)!
+        let resp = try JSONDecoder().decode(DeletePassResponse.self, from: json)
+        #expect(resp.id == "pass-1")
+        #expect(resp.serialNumber == "SN-001")
+        #expect(resp.deleted == true)
+    }
+
+    @Test func changeRoleResponseDecoding() throws {
+        let json = #"{"id":"m-1","role":"admin"}"#.data(using: .utf8)!
+        let resp = try JSONDecoder().decode(ChangeRoleResponse.self, from: json)
+        #expect(resp.id == "m-1")
+        #expect(resp.role == .admin)
+    }
+
+    @Test func invitationWithAcceptUrlDecoding() throws {
+        let json = """
+        {"id":"inv-1","email":"b@c.com","role":"editor","status":"pending","accept_url":"https://example.com/accept?token=abc","expires_at":"2026-02-01T00:00:00Z","created_at":"2026-01-01T00:00:00Z"}
+        """.data(using: .utf8)!
+        let inv = try JSONDecoder().decode(Invitation.self, from: json)
+        #expect(inv.acceptUrl == "https://example.com/accept?token=abc")
+        #expect(inv.role == .editor)
     }
 
     @Test func voidPassResponseDecoding() throws {

@@ -161,6 +161,70 @@ extension AllMockTests {
             #expect(result.voidedAt == "2026-01-02T00:00:00Z")
         }
 
+        @Test func deletePass() async throws {
+            let responseJSON = #"{"id":"pass-1","serial_number":"SN-001","deleted":true}"#
+            MockURLProtocol.requestHandler = { request in
+                #expect(request.httpMethod == "DELETE")
+                #expect(request.url?.path.hasSuffix("/manage-passes/pass-1") == true)
+                return mockResponse(json: responseJSON)
+            }
+
+            let result = try await resource.delete("pass-1")
+            #expect(result.id == "pass-1")
+            #expect(result.deleted == true)
+        }
+
+        @Test func getPassBySerial() async throws {
+            MockURLProtocol.requestHandler = { request in
+                #expect(request.httpMethod == "GET")
+                #expect(request.url?.path.hasSuffix("/manage-passes/serial/SN-001") == true)
+                return mockResponse(json: passJSON)
+            }
+
+            let pass = try await resource.getBySerial("SN-001")
+            #expect(pass.id == "pass-1")
+            #expect(pass.serialNumber == "SN-001")
+        }
+
+        @Test func updatePassBySerial() async throws {
+            let responseJSON = """
+            {"id":"pass-1","status":"active","devices_notified":1,"updated_at":"2026-01-02T00:00:00Z"}
+            """
+            MockURLProtocol.requestHandler = { request in
+                #expect(request.httpMethod == "PATCH")
+                #expect(request.url?.path.hasSuffix("/manage-passes/serial/SN-001") == true)
+                return mockResponse(json: responseJSON)
+            }
+
+            let result = try await resource.updateBySerial("SN-001", UpdatePassRequest(data: ["name": "John"]))
+            #expect(result.id == "pass-1")
+            #expect(result.devicesNotified == 1)
+        }
+
+        @Test func deletePassBySerial() async throws {
+            let responseJSON = #"{"id":"pass-1","serial_number":"SN-001","deleted":true}"#
+            MockURLProtocol.requestHandler = { request in
+                #expect(request.httpMethod == "DELETE")
+                #expect(request.url?.path.hasSuffix("/manage-passes/serial/SN-001") == true)
+                return mockResponse(json: responseJSON)
+            }
+
+            let result = try await resource.deleteBySerial("SN-001")
+            #expect(result.serialNumber == "SN-001")
+            #expect(result.deleted == true)
+        }
+
+        @Test func downloadPassBySerial() async throws {
+            let binaryData = Data([0x50, 0x4B, 0x03, 0x04])
+            MockURLProtocol.requestHandler = { request in
+                #expect(request.url?.path.hasSuffix("/manage-passes/serial/SN-001/download") == true)
+                return mockResponse(data: binaryData, headers: ["Content-Type": "application/vnd.apple.pkpass"])
+            }
+
+            let data = try await resource.downloadBySerial("SN-001")
+            #expect(data == binaryData)
+        }
+
         @Test func generatePassAPIError() async throws {
             MockURLProtocol.requestHandler = { _ in
                 return mockResponse(statusCode: 401, json: #"{"error":{"code":"auth","message":"Invalid key"}}"#)

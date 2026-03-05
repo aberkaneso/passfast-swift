@@ -67,9 +67,7 @@ extension AllMockTests {
             let certJSON = """
             [{
                 "id": "cert-1", "organization_id": "org-1", "app_id": "app-1",
-                "cert_type": "wwdr", "filename": "wwdr.pem",
-                "subject": null, "issuer": null,
-                "valid_from": null, "valid_to": null,
+                "cert_type": "wwdr",
                 "is_active": true, "created_at": "2026-01-01T00:00:00Z",
                 "updated_at": null
             }]
@@ -88,9 +86,7 @@ extension AllMockTests {
             let responseJSON = """
             {
                 "id": "cert-2", "organization_id": "org-1", "app_id": "app-1",
-                "cert_type": "signer_cert", "filename": "cert.pem",
-                "subject": "CN=Test", "issuer": "Apple",
-                "valid_from": "2025-01-01", "valid_to": "2026-01-01",
+                "cert_type": "signer_cert",
                 "is_active": true, "created_at": "2026-01-01T00:00:00Z",
                 "updated_at": null
             }
@@ -114,9 +110,7 @@ extension AllMockTests {
                 "message": "P12 bundle uploaded successfully",
                 "certificates": [{
                     "id": "cert-3", "organization_id": "org-1", "app_id": "app-1",
-                    "cert_type": "signer_cert", "filename": "bundle.p12",
-                    "subject": "CN=Test", "issuer": "Apple",
-                    "valid_from": "2025-01-01", "valid_to": "2026-01-01",
+                    "cert_type": "signer_cert",
                     "is_active": true, "created_at": "2026-01-01T00:00:00Z",
                     "updated_at": null
                 }]
@@ -150,7 +144,7 @@ extension AllMockTests {
         @Test func listApiKeys() async throws {
             let keyJSON = """
             [{
-                "id": "key-1", "organization_id": "org-1", "name": "Prod Key",
+                "id": "key-1", "name": "Prod Key",
                 "key_type": "secret", "key_prefix": "sk_live_",
                 "scopes": ["passes:write"], "expires_at": null,
                 "is_active": true, "last_used_at": null,
@@ -168,7 +162,7 @@ extension AllMockTests {
         @Test func createApiKey() async throws {
             let responseJSON = """
             {
-                "id": "key-2", "organization_id": "org-1", "name": "New Key",
+                "id": "key-2", "name": "New Key",
                 "key_type": "publishable", "key_prefix": "pk_live_",
                 "scopes": ["passes:read"], "raw_key": "pk_live_newkey123",
                 "expires_at": null, "is_active": true,
@@ -276,7 +270,7 @@ extension AllMockTests {
         }
 
         @Test func changeRole() async throws {
-            let responseJSON = #"{"id":"m-1","user_id":"u-1","email":"a@b.com","role":"admin","created_at":"2026-01-01T00:00:00Z"}"#
+            let responseJSON = #"{"id":"m-1","role":"admin"}"#
             MockURLProtocol.requestHandler = { request in
                 #expect(request.httpMethod == "PATCH")
                 #expect(request.url?.path.hasSuffix("/manage-members/u-1") == true)
@@ -284,8 +278,9 @@ extension AllMockTests {
                 return mockResponse(json: responseJSON)
             }
 
-            let member = try await MemberResource(http: http).changeRole("u-1", ChangeRoleRequest(role: .admin))
-            #expect(member.role == .admin)
+            let result = try await MemberResource(http: http).changeRole("u-1", ChangeRoleRequest(role: .admin))
+            #expect(result.id == "m-1")
+            #expect(result.role == .admin)
         }
 
         @Test func removeMember() async throws {
@@ -306,10 +301,10 @@ extension AllMockTests {
         @Test func listWebhookEvents() async throws {
             let evtJSON = """
             [{
-                "id": "evt-1", "organization_id": "org-1", "app_id": "app-1",
+                "id": "evt-1",
                 "event_type": "pass.updated", "payload": {},
                 "delivery_status": "pending", "attempts": 0,
-                "last_attempt_at": null, "delivered_at": null,
+                "delivered_at": null,
                 "next_retry_at": null, "last_error": null,
                 "created_at": "2026-01-01T00:00:00Z"
             }]

@@ -167,11 +167,6 @@ public struct Certificate: Codable, Identifiable, Sendable {
     public let organizationId: String
     public let appId: String
     public let certType: CertType
-    public let filename: String
-    public let subject: String?
-    public let issuer: String?
-    public let validFrom: String?
-    public let validTo: String?
     public let isActive: Bool
     public let createdAt: String
     public let updatedAt: String?
@@ -181,10 +176,6 @@ public struct Certificate: Codable, Identifiable, Sendable {
         case organizationId = "organization_id"
         case appId = "app_id"
         case certType = "cert_type"
-        case filename
-        case subject, issuer
-        case validFrom = "valid_from"
-        case validTo = "valid_to"
         case isActive = "is_active"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
@@ -255,7 +246,6 @@ public struct App: Codable, Identifiable, Sendable, CustomStringConvertible {
 
 public struct ApiKey: Codable, Identifiable, Sendable {
     public let id: String
-    public let organizationId: String
     public let name: String
     public let keyType: KeyType
     public let keyPrefix: String
@@ -266,9 +256,7 @@ public struct ApiKey: Codable, Identifiable, Sendable {
     public let createdAt: String
 
     enum CodingKeys: String, CodingKey {
-        case id
-        case organizationId = "organization_id"
-        case name
+        case id, name
         case keyType = "key_type"
         case keyPrefix = "key_prefix"
         case scopes
@@ -281,7 +269,6 @@ public struct ApiKey: Codable, Identifiable, Sendable {
 
 public struct ApiKeyCreated: Codable, Sendable, CustomStringConvertible {
     public let id: String
-    public let organizationId: String
     public let name: String
     public let keyType: KeyType
     public let keyPrefix: String
@@ -292,9 +279,7 @@ public struct ApiKeyCreated: Codable, Sendable, CustomStringConvertible {
     public let createdAt: String
 
     enum CodingKeys: String, CodingKey {
-        case id
-        case organizationId = "organization_id"
-        case name
+        case id, name
         case keyType = "key_type"
         case keyPrefix = "key_prefix"
         case scopes
@@ -329,11 +314,13 @@ public struct Invitation: Codable, Identifiable, Sendable {
     public let email: String
     public let role: OrgRole
     public let status: InvitationStatus
+    public let acceptUrl: String?
     public let expiresAt: String
     public let createdAt: String
 
     enum CodingKeys: String, CodingKey {
         case id, email, role, status
+        case acceptUrl = "accept_url"
         case expiresAt = "expires_at"
         case createdAt = "created_at"
     }
@@ -341,30 +328,24 @@ public struct Invitation: Codable, Identifiable, Sendable {
 
 public struct WebhookEvent: Codable, Identifiable, Sendable {
     public let id: String
-    public let organizationId: String
-    public let appId: String
     public let eventType: EventType
     public let payload: [String: AnyCodable]
     public let deliveryStatus: DeliveryStatus
     public let attempts: Int
-    public let lastAttemptAt: String?
+    public let lastError: String?
     public let deliveredAt: String?
     public let nextRetryAt: String?
-    public let lastError: String?
     public let createdAt: String
 
     enum CodingKeys: String, CodingKey {
         case id
-        case organizationId = "organization_id"
-        case appId = "app_id"
         case eventType = "event_type"
         case payload
         case deliveryStatus = "delivery_status"
         case attempts
-        case lastAttemptAt = "last_attempt_at"
+        case lastError = "last_error"
         case deliveredAt = "delivered_at"
         case nextRetryAt = "next_retry_at"
-        case lastError = "last_error"
         case createdAt = "created_at"
     }
 }
@@ -741,6 +722,23 @@ public struct VoidPassResponse: Codable, Sendable {
         case voidedAt = "voided_at"
         case updatedAt = "updated_at"
     }
+}
+
+public struct DeletePassResponse: Codable, Sendable {
+    public let id: String
+    public let serialNumber: String
+    public let deleted: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case serialNumber = "serial_number"
+        case deleted
+    }
+}
+
+public struct ChangeRoleResponse: Codable, Sendable {
+    public let id: String
+    public let role: OrgRole
 }
 
 public struct UpdateAppResponse: Codable, Sendable, CustomStringConvertible {

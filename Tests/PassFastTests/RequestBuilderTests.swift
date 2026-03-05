@@ -18,9 +18,14 @@ struct RequestBuilderTests {
         #expect(req.value(forHTTPHeaderField: "Authorization") == "Bearer sk_live_test123")
     }
 
-    @Test func orgIdHeader() throws {
-        let req = try builder.buildRequest(method: "GET", path: "/test")
+    @Test func orgIdViaAdditionalHeaders() throws {
+        let req = try builder.buildRequest(method: "GET", path: "/test", additionalHeaders: ["X-Org-Id": "org-1"])
         #expect(req.value(forHTTPHeaderField: "X-Org-Id") == "org-1")
+    }
+
+    @Test func orgIdNotSetGlobally() throws {
+        let req = try builder.buildRequest(method: "GET", path: "/test")
+        #expect(req.value(forHTTPHeaderField: "X-Org-Id") == nil)
     }
 
     @Test func appIdHeader() throws {
