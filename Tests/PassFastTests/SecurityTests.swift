@@ -135,16 +135,7 @@ struct UploadValidationTests: @unchecked Sendable {
     @Test func rejectsEmptyImageData() async {
         let http = makeTestHTTPClient()
         let resource = ImageResource(http: http)
-        let request = UploadImageRequest(purpose: "icon", filename: "test.png", data: "")
-        await #expect(throws: PassFastError.self) {
-            _ = try await resource.upload(request)
-        }
-    }
-
-    @Test func rejectsInvalidBase64ImageData() async {
-        let http = makeTestHTTPClient()
-        let resource = ImageResource(http: http)
-        let request = UploadImageRequest(purpose: "icon", filename: "test.png", data: "not-valid-base64!!!")
+        let request = UploadImageRequest(purpose: .icon, fileData: Data())
         await #expect(throws: PassFastError.self) {
             _ = try await resource.upload(request)
         }
@@ -188,6 +179,7 @@ struct SensitiveDataTests {
             "id": "key-1", "organization_id": "org-1", "name": "Test",
             "key_type": "secret", "key_prefix": "sk_live_",
             "scopes": ["read"], "raw_key": "sk_live_super_secret_key",
+            "message": "API key created",
             "expires_at": null, "is_active": true, "created_at": "2026-01-01T00:00:00Z"
         }
         """.data(using: .utf8)!
@@ -204,20 +196,20 @@ struct SensitiveDataTests {
         #expect(desc.contains("[REDACTED]"))
     }
 
-    @Test func organizationRedactsWebhookSecret() throws {
+    @Test func organizationDescription() throws {
         let json = """
         {
             "id": "org-1", "name": "Test Org", "slug": "test",
             "apns_key_id": null, "billing_plan": "free",
             "monthly_pass_limit": 100, "features": null,
-            "is_active": true, "webhook_secret": "whsec_super_secret",
+            "is_active": true,
             "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z"
         }
         """.data(using: .utf8)!
         let org = try JSONDecoder().decode(Organization.self, from: json)
         let desc = String(describing: org)
-        #expect(!desc.contains("whsec_super_secret"))
-        #expect(desc.contains("[REDACTED]"))
+        #expect(desc.contains("org-1"))
+        #expect(desc.contains("Test Org"))
     }
 }
 

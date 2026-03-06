@@ -4,7 +4,7 @@ import Foundation
 
 private let orgJSON = """
 {"id":"org-1","name":"Acme","slug":null,"apns_key_id":null,"billing_plan":null,
- "monthly_pass_limit":null,"features":null,"is_active":true,"webhook_secret":null,
+ "monthly_pass_limit":null,"features":null,"is_active":true,
  "created_at":"2026-01-01T00:00:00Z","updated_at":"2026-01-01T00:00:00Z"}
 """
 
@@ -95,10 +95,12 @@ extension AllMockTests {
             MockURLProtocol.requestHandler = { request in
                 #expect(request.httpMethod == "DELETE")
                 #expect(request.url?.path.hasSuffix("/manage-org/app") == true)
-                return mockResponse(statusCode: 200, data: Data())
+                return mockResponse(json: #"{"id":"app-1","is_active":false,"message":"App deleted"}"#)
             }
 
-            try await resource.deleteApp()
+            let result = try await resource.deleteApp()
+            #expect(result.id == "app-1")
+            #expect(result.isActive == false)
         }
 
         @Test func testWebhook() async throws {

@@ -109,6 +109,54 @@ actor HTTPClient {
         return RawResponse(data: data, httpResponse: httpResponse)
     }
 
+    // MARK: - Multipart form-data
+
+    func requestMultipart<T: Decodable>(
+        path: String,
+        fields: [String: String],
+        fileData: Data,
+        fileFieldName: String,
+        fileName: String,
+        mimeType: String = "application/octet-stream"
+    ) async throws -> T {
+        let boundary = "PassFast-\(UUID().uuidString)"
+        var body = Data()
+
+        for (key, value) in fields {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(value)\r\n".data(using: .utf8)!)
+        }
+
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"\(fileFieldName)\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        body.append(fileData)
+        body.append("\r\n".data(using: .utf8)!)
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+
+        var urlRequest = try requestBuilder.buildRequest(method: "POST", path: path)
+        urlRequest.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        urlRequest.httpBody = body
+
+        let (data, response) = try await perform(urlRequest)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw PassFastError.unknown(statusCode: 0, code: "no_response", message: "No HTTP response")
+        }
+
+        guard (200...299).contains(httpResponse.statusCode) else {
+            throw parseAPIError(statusCode: httpResponse.statusCode, data: data)
+        }
+
+        do {
+            let decoder = JSONDecoder()
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            throw PassFastError.decodingError(error)
+        }
+    }
+
     // MARK: - Private
 
     private func perform(_ request: URLRequest) async throws -> (Data, URLResponse) {

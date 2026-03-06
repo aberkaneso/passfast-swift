@@ -23,11 +23,11 @@ struct ModelCodingTests {
         }
     }
 
-    @Test func templateStatusRoundTrip() throws {
-        for status in [TemplateStatus.draft, .published, .archived] {
-            let data = try JSONEncoder().encode(status)
-            let decoded = try JSONDecoder().decode(TemplateStatus.self, from: data)
-            #expect(decoded == status)
+    @Test func imagePurposeRoundTrip() throws {
+        for purpose in [ImagePurpose.icon, .icon2x, .logo, .strip, .background, .footer] {
+            let data = try JSONEncoder().encode(purpose)
+            let decoded = try JSONDecoder().decode(ImagePurpose.self, from: data)
+            #expect(decoded == purpose)
         }
     }
 
@@ -87,7 +87,8 @@ struct ModelCodingTests {
             "pass_style": "storeCard",
             "structure": {"key": "value"},
             "field_schema": null,
-            "status": "draft",
+            "is_published": false,
+            "is_archived": false,
             "icon_image_id": null,
             "logo_image_id": null,
             "strip_image_id": null,
@@ -101,14 +102,15 @@ struct ModelCodingTests {
         let template = try JSONDecoder().decode(Template.self, from: json)
         #expect(template.id == "tmpl-1")
         #expect(template.passStyle == .storeCard)
-        #expect(template.status == .draft)
+        #expect(template.isPublished == false)
+        #expect(template.isArchived == false)
         #expect(template.fieldSchema == nil)
     }
 
     @Test func organizationDecoding() throws {
         let json = """
         {"id":"org-1","name":"Acme","slug":"acme","apns_key_id":null,"billing_plan":"pro",
-         "monthly_pass_limit":10000,"features":null,"is_active":true,"webhook_secret":null,
+         "monthly_pass_limit":10000,"features":null,"is_active":true,
          "created_at":"2026-01-01T00:00:00Z","updated_at":"2026-01-01T00:00:00Z"}
         """.data(using: .utf8)!
         let org = try JSONDecoder().decode(Organization.self, from: json)
@@ -172,6 +174,7 @@ struct ModelCodingTests {
             "key_prefix": "pk_live_",
             "scopes": ["passes:read"],
             "raw_key": "pk_live_abc123xyz",
+            "message": "API key created successfully",
             "expires_at": null,
             "is_active": true,
             "created_at": "2026-01-01T00:00:00Z"
@@ -181,6 +184,7 @@ struct ModelCodingTests {
         #expect(key.rawKey == "pk_live_abc123xyz")
         #expect(key.keyType == .publishable)
         #expect(key.keyPrefix == "pk_live_")
+        #expect(key.message == "API key created successfully")
     }
 
     @Test func memberDecoding() throws {
@@ -208,14 +212,20 @@ struct ModelCodingTests {
             "organization_id": "org-1",
             "app_id": "app-1",
             "purpose": "icon",
-            "filename": "icon.png",
+            "mime_type": "image/png",
+            "size_bytes": 4096,
+            "width": 58,
+            "height": 58,
             "storage_path": "/images/icon.png",
             "preview_url": "https://example.com/preview/icon.png",
-            "created_at": "2026-01-01T00:00:00Z"
+            "uploaded_at": "2026-01-01T00:00:00Z"
         }
         """.data(using: .utf8)!
         let img = try JSONDecoder().decode(PassImage.self, from: json)
-        #expect(img.purpose == "icon")
+        #expect(img.purpose == .icon)
+        #expect(img.mimeType == "image/png")
+        #expect(img.sizeBytes == 4096)
+        #expect(img.width == 58)
         #expect(img.previewUrl == "https://example.com/preview/icon.png")
     }
 
@@ -223,18 +233,21 @@ struct ModelCodingTests {
         let json = """
         {
             "id": "cert-1",
-            "organization_id": "org-1",
             "app_id": "app-1",
             "cert_type": "signer_cert",
+            "cert_hash": "abc123",
+            "common_name": "Apple Worldwide",
             "is_active": true,
-            "created_at": "2026-01-01T00:00:00Z",
-            "updated_at": "2026-01-02T00:00:00Z"
+            "valid_from": "2025-01-01T00:00:00Z",
+            "valid_until": "2027-01-01T00:00:00Z",
+            "created_at": "2026-01-01T00:00:00Z"
         }
         """.data(using: .utf8)!
         let cert = try JSONDecoder().decode(Certificate.self, from: json)
         #expect(cert.certType == .signerCert)
         #expect(cert.isActive == true)
-        #expect(cert.updatedAt == "2026-01-02T00:00:00Z")
+        #expect(cert.certHash == "abc123")
+        #expect(cert.commonName == "Apple Worldwide")
     }
 
     @Test func webhookEventDecoding() throws {
@@ -266,7 +279,7 @@ struct ModelCodingTests {
         #expect(json["latitude"] as? Double == 37.7749)
         #expect(json["longitude"] as? Double == -122.4194)
         #expect(json["altitude"] as? Double == 10.0)
-        #expect(json["relevant_text"] as? String == "Near HQ")
+        #expect(json["relevantText"] as? String == "Near HQ")
 
         let decoded = try JSONDecoder().decode(PassLocation.self, from: data)
         #expect(decoded.latitude == 37.7749)
@@ -370,7 +383,7 @@ struct ModelCodingTests {
         #expect(json["max_distance"] as? Double == 1000.0)
         let locations = json["locations"] as? [[String: Any]]
         #expect(locations?.count == 1)
-        #expect(locations?[0]["relevant_text"] as? String == "London")
+        #expect(locations?[0]["relevantText"] as? String == "London")
     }
 
     @Test func updatePassRequestOptionalData() throws {
@@ -387,13 +400,15 @@ struct ModelCodingTests {
             "id": "pass-1",
             "status": "active",
             "devices_notified": 3,
-            "updated_at": "2026-01-02T00:00:00Z"
+            "updated_at": "2026-01-02T00:00:00Z",
+            "expires_at": null
         }
         """.data(using: .utf8)!
         let resp = try JSONDecoder().decode(UpdatePassResponse.self, from: json)
         #expect(resp.id == "pass-1")
         #expect(resp.status == .active)
         #expect(resp.devicesNotified == 3)
+        #expect(resp.expiresAt == nil)
     }
 
     @Test func listPassesParamsWithDateFilters() throws {
@@ -414,14 +429,6 @@ struct ModelCodingTests {
         #expect(!items.contains { $0.name == "created_after" })
         #expect(!items.contains { $0.name == "created_before" })
         #expect(items.contains { $0.name == "limit" && $0.value == "10" })
-    }
-
-    @Test func deletePassResponseDecoding() throws {
-        let json = #"{"id":"pass-1","serial_number":"SN-001","deleted":true}"#.data(using: .utf8)!
-        let resp = try JSONDecoder().decode(DeletePassResponse.self, from: json)
-        #expect(resp.id == "pass-1")
-        #expect(resp.serialNumber == "SN-001")
-        #expect(resp.deleted == true)
     }
 
     @Test func changeRoleResponseDecoding() throws {
@@ -447,12 +454,18 @@ struct ModelCodingTests {
             "serial_number": "SN-001",
             "status": "invalidated",
             "voided_at": "2026-01-02T00:00:00Z",
-            "updated_at": "2026-01-02T00:00:00Z"
+            "updated_at": "2026-01-02T00:00:00Z",
+            "pkpass_rebuilt": true,
+            "devices_notified": 2,
+            "warning": null
         }
         """.data(using: .utf8)!
         let resp = try JSONDecoder().decode(VoidPassResponse.self, from: json)
         #expect(resp.id == "pass-1")
         #expect(resp.status == .invalidated)
         #expect(resp.voidedAt == "2026-01-02T00:00:00Z")
+        #expect(resp.pkpassRebuilt == true)
+        #expect(resp.devicesNotified == 2)
+        #expect(resp.warning == nil)
     }
 }

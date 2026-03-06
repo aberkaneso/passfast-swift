@@ -30,8 +30,8 @@ public struct OrganizationResource: Sendable {
     }
 
     /// Delete an app.
-    public func deleteApp() async throws {
-        try await http.request(method: "DELETE", path: "/manage-org/app") as Void
+    public func deleteApp() async throws -> DeleteAppResponse {
+        try await http.request(method: "DELETE", path: "/manage-org/app")
     }
 
     /// Test the configured validation webhook.

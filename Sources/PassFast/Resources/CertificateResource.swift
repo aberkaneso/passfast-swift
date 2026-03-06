@@ -38,8 +38,8 @@ public struct CertificateResource: Sendable {
     }
 
     /// Delete a certificate by ID.
-    public func delete(_ certId: String) async throws {
+    public func delete(_ certId: String) async throws -> DeleteCertificateResponse {
         let safeId = try RequestBuilder.sanitizePathComponent(certId)
-        try await http.request(method: "DELETE", path: "/manage-certs/\(safeId)") as Void
+        return try await http.request(method: "DELETE", path: "/manage-certs/\(safeId)")
     }
 }

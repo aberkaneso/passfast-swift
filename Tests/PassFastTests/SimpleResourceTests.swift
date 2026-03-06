@@ -13,9 +13,10 @@ extension AllMockTests {
             let imageJSON = """
             [{
                 "id": "img-1", "organization_id": "org-1", "app_id": "app-1",
-                "purpose": "icon", "filename": "icon.png",
+                "purpose": "icon", "mime_type": "image/png", "size_bytes": 4096,
+                "width": 58, "height": 58,
                 "storage_path": "/images/icon.png", "preview_url": null,
-                "created_at": "2026-01-01T00:00:00Z"
+                "uploaded_at": "2026-01-01T00:00:00Z"
             }]
             """
             MockURLProtocol.requestHandler = { request in
@@ -25,40 +26,44 @@ extension AllMockTests {
 
             let images = try await ImageResource(http: http).list()
             #expect(images.count == 1)
-            #expect(images[0].filename == "icon.png")
-            #expect(images[0].purpose == "icon")
+            #expect(images[0].purpose == .icon)
+            #expect(images[0].mimeType == "image/png")
         }
 
         @Test func uploadImage() async throws {
             let responseJSON = """
             {
                 "id": "img-2", "organization_id": "org-1", "app_id": "app-1",
-                "purpose": "logo", "filename": "logo.png",
+                "purpose": "logo", "mime_type": "image/png", "size_bytes": 2048,
+                "width": 100, "height": 50,
                 "storage_path": "/images/logo.png", "preview_url": "https://example.com/preview/logo.png",
-                "created_at": "2026-01-01T00:00:00Z"
+                "uploaded_at": "2026-01-01T00:00:00Z"
             }
             """
             MockURLProtocol.requestHandler = { request in
                 #expect(request.httpMethod == "POST")
                 #expect(request.url?.path.hasSuffix("/manage-images") == true)
+                let contentType = request.value(forHTTPHeaderField: "Content-Type") ?? ""
+                #expect(contentType.contains("multipart/form-data"))
                 return mockResponse(json: responseJSON)
             }
 
             let result = try await ImageResource(http: http).upload(
-                UploadImageRequest(purpose: "logo", filename: "logo.png", data: "aW1hZ2VkYXRh")
+                UploadImageRequest(purpose: .logo, fileData: Data("imagedata".utf8), fileName: "logo.png")
             )
             #expect(result.id == "img-2")
-            #expect(result.purpose == "logo")
+            #expect(result.purpose == .logo)
         }
 
         @Test func deleteImage() async throws {
             MockURLProtocol.requestHandler = { request in
                 #expect(request.httpMethod == "DELETE")
                 #expect(request.url?.path.hasSuffix("/manage-images/img-1") == true)
-                return mockResponse(statusCode: 200, data: Data())
+                return mockResponse(json: #"{"success":true}"#)
             }
 
-            try await ImageResource(http: http).delete("img-1")
+            let result = try await ImageResource(http: http).delete("img-1")
+            #expect(result.success == true)
         }
 
         // MARK: - Certificates
@@ -66,10 +71,11 @@ extension AllMockTests {
         @Test func listCertificates() async throws {
             let certJSON = """
             [{
-                "id": "cert-1", "organization_id": "org-1", "app_id": "app-1",
-                "cert_type": "wwdr",
-                "is_active": true, "created_at": "2026-01-01T00:00:00Z",
-                "updated_at": null
+                "id": "cert-1", "app_id": "app-1",
+                "cert_type": "wwdr", "cert_hash": "hash1",
+                "common_name": null,
+                "is_active": true, "valid_from": null, "valid_until": null,
+                "created_at": "2026-01-01T00:00:00Z"
             }]
             """
             MockURLProtocol.requestHandler = { request in
@@ -85,10 +91,11 @@ extension AllMockTests {
         @Test func uploadCertificate() async throws {
             let responseJSON = """
             {
-                "id": "cert-2", "organization_id": "org-1", "app_id": "app-1",
-                "cert_type": "signer_cert",
-                "is_active": true, "created_at": "2026-01-01T00:00:00Z",
-                "updated_at": null
+                "id": "cert-2", "app_id": "app-1",
+                "cert_type": "signer_cert", "cert_hash": "hash2",
+                "common_name": "Apple Signer",
+                "is_active": true, "valid_from": null, "valid_until": null,
+                "created_at": "2026-01-01T00:00:00Z"
             }
             """
             MockURLProtocol.requestHandler = { request in
@@ -109,10 +116,11 @@ extension AllMockTests {
             {
                 "message": "P12 bundle uploaded successfully",
                 "certificates": [{
-                    "id": "cert-3", "organization_id": "org-1", "app_id": "app-1",
-                    "cert_type": "signer_cert",
-                    "is_active": true, "created_at": "2026-01-01T00:00:00Z",
-                    "updated_at": null
+                    "id": "cert-3", "app_id": "app-1",
+                    "cert_type": "signer_cert", "cert_hash": "hash3",
+                    "common_name": null,
+                    "is_active": true, "valid_from": null, "valid_until": null,
+                    "created_at": "2026-01-01T00:00:00Z"
                 }]
             }
             """
@@ -133,10 +141,11 @@ extension AllMockTests {
             MockURLProtocol.requestHandler = { request in
                 #expect(request.httpMethod == "DELETE")
                 #expect(request.url?.path.hasSuffix("/manage-certs/cert-1") == true)
-                return mockResponse(statusCode: 200, data: Data())
+                return mockResponse(json: #"{"success":true}"#)
             }
 
-            try await CertificateResource(http: http).delete("cert-1")
+            let result = try await CertificateResource(http: http).delete("cert-1")
+            #expect(result.success == true)
         }
 
         // MARK: - API Keys
@@ -165,6 +174,7 @@ extension AllMockTests {
                 "id": "key-2", "name": "New Key",
                 "key_type": "publishable", "key_prefix": "pk_live_",
                 "scopes": ["passes:read"], "raw_key": "pk_live_newkey123",
+                "message": "API key created",
                 "expires_at": null, "is_active": true,
                 "created_at": "2026-01-01T00:00:00Z"
             }

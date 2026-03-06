@@ -7,7 +7,7 @@ private let templateJSON = """
     "id": "tmpl-1", "organization_id": "org-1", "app_id": "app-1",
     "name": "Loyalty Card", "description": null, "pass_style": "storeCard",
     "structure": {"key": "value"}, "field_schema": null,
-    "status": "draft",
+    "is_published": false, "is_archived": false,
     "icon_image_id": null, "logo_image_id": null, "strip_image_id": null,
     "thumbnail_image_id": null, "background_image_id": null,
     "published_at": null,
@@ -69,14 +69,16 @@ extension AllMockTests {
             MockURLProtocol.requestHandler = { request in
                 #expect(request.httpMethod == "DELETE")
                 #expect(request.url?.path.hasSuffix("/manage-templates/tmpl-1") == true)
-                return mockResponse(statusCode: 200, data: Data())
+                return mockResponse(json: #"{"success":true}"#)
             }
 
-            try await resource.delete("tmpl-1")
+            let result = try await resource.delete("tmpl-1")
+            #expect(result.success == true)
         }
 
         @Test func publishTemplate() async throws {
-            let publishedJSON = templateJSON.replacingOccurrences(of: "\"status\": \"draft\"", with: "\"status\": \"published\"")
+            let publishedJSON = templateJSON
+                .replacingOccurrences(of: "\"is_published\": false", with: "\"is_published\": true")
             MockURLProtocol.requestHandler = { request in
                 #expect(request.httpMethod == "POST")
                 #expect(request.url?.path.hasSuffix("/manage-templates/tmpl-1/publish") == true)
@@ -84,7 +86,7 @@ extension AllMockTests {
             }
 
             let template = try await resource.publish("tmpl-1")
-            #expect(template.status == .published)
+            #expect(template.isPublished == true)
         }
     }
 }

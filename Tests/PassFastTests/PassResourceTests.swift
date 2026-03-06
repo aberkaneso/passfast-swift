@@ -126,7 +126,8 @@ extension AllMockTests {
                 "id": "pass-1",
                 "status": "active",
                 "devices_notified": 2,
-                "updated_at": "2026-01-02T00:00:00Z"
+                "updated_at": "2026-01-02T00:00:00Z",
+                "expires_at": null
             }
             """
             MockURLProtocol.requestHandler = { request in
@@ -147,7 +148,10 @@ extension AllMockTests {
                 "serial_number": "SN-001",
                 "status": "invalidated",
                 "voided_at": "2026-01-02T00:00:00Z",
-                "updated_at": "2026-01-02T00:00:00Z"
+                "updated_at": "2026-01-02T00:00:00Z",
+                "pkpass_rebuilt": true,
+                "devices_notified": 1,
+                "warning": null
             }
             """
             MockURLProtocol.requestHandler = { request in
@@ -159,19 +163,6 @@ extension AllMockTests {
             let result = try await resource.void("pass-1")
             #expect(result.status == .invalidated)
             #expect(result.voidedAt == "2026-01-02T00:00:00Z")
-        }
-
-        @Test func deletePass() async throws {
-            let responseJSON = #"{"id":"pass-1","serial_number":"SN-001","deleted":true}"#
-            MockURLProtocol.requestHandler = { request in
-                #expect(request.httpMethod == "DELETE")
-                #expect(request.url?.path.hasSuffix("/manage-passes/pass-1") == true)
-                return mockResponse(json: responseJSON)
-            }
-
-            let result = try await resource.delete("pass-1")
-            #expect(result.id == "pass-1")
-            #expect(result.deleted == true)
         }
 
         @Test func getPassBySerial() async throws {
@@ -188,7 +179,7 @@ extension AllMockTests {
 
         @Test func updatePassBySerial() async throws {
             let responseJSON = """
-            {"id":"pass-1","status":"active","devices_notified":1,"updated_at":"2026-01-02T00:00:00Z"}
+            {"id":"pass-1","status":"active","devices_notified":1,"updated_at":"2026-01-02T00:00:00Z","expires_at":null}
             """
             MockURLProtocol.requestHandler = { request in
                 #expect(request.httpMethod == "PATCH")
@@ -201,17 +192,19 @@ extension AllMockTests {
             #expect(result.devicesNotified == 1)
         }
 
-        @Test func deletePassBySerial() async throws {
-            let responseJSON = #"{"id":"pass-1","serial_number":"SN-001","deleted":true}"#
+        @Test func voidPassBySerial() async throws {
+            let responseJSON = """
+            {"id":"pass-1","serial_number":"SN-001","status":"invalidated","voided_at":"2026-01-02T00:00:00Z","updated_at":"2026-01-02T00:00:00Z","pkpass_rebuilt":true,"devices_notified":1,"warning":null}
+            """
             MockURLProtocol.requestHandler = { request in
-                #expect(request.httpMethod == "DELETE")
-                #expect(request.url?.path.hasSuffix("/manage-passes/serial/SN-001") == true)
+                #expect(request.httpMethod == "POST")
+                #expect(request.url?.path.hasSuffix("/manage-passes/serial/SN-001/void") == true)
                 return mockResponse(json: responseJSON)
             }
 
-            let result = try await resource.deleteBySerial("SN-001")
-            #expect(result.serialNumber == "SN-001")
-            #expect(result.deleted == true)
+            let result = try await resource.voidBySerial("SN-001")
+            #expect(result.status == .invalidated)
+            #expect(result.devicesNotified == 1)
         }
 
         @Test func downloadPassBySerial() async throws {

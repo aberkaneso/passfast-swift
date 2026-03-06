@@ -39,11 +39,13 @@ Tests/PassFastTests/
 ```
 
 ## Key Conventions
-- **CodingKeys**: All models use `snake_case` JSON keys mapped to `camelCase` Swift properties
+- **CodingKeys**: Most models use `snake_case` JSON keys mapped to `camelCase` Swift properties. Exception: `PassLocation.relevantText` uses camelCase JSON key `"relevantText"`
 - **Resource pattern**: Each resource struct holds an `HTTPClient` ref, methods are `async throws`
 - **Path params**: Always use `RequestBuilder.sanitizePathComponent()` for user-provided path segments
 - **Query params**: `ListXxxParams` structs have a `queryItems` computed property returning `[URLQueryItem]`
-- **Request types**: Conform to `Encodable, Sendable`; response/model types to `Codable, Sendable`
+- **Request types**: Conform to `Encodable, Sendable`; response/model types to `Codable, Sendable`. Exception: `UploadImageRequest` is `Sendable` only (uses multipart upload, not JSON)
+- **Image upload**: Uses `multipart/form-data` via `HTTPClient.requestMultipart()`, not JSON
+- **Delete methods**: Return typed response structs (e.g. `DeleteTemplateResponse`, `DeleteImageResponse`), not `Void`
 - **Mock tests**: All tests using `MockURLProtocol` must be nested under `AllMockTests` (serialized suite) to avoid races
 - **Test style**: Use `#expect()` assertions, not XCTAssert
 

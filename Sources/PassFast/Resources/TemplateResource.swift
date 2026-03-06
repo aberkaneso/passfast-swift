@@ -9,9 +9,9 @@ public struct TemplateResource: Sendable {
         try await http.request(method: "POST", path: "/manage-templates", body: request)
     }
 
-    /// List all templates.
-    public func list() async throws -> [Template] {
-        try await http.request(method: "GET", path: "/manage-templates")
+    /// List all templates with optional filters.
+    public func list(_ params: ListTemplatesParams? = nil) async throws -> [Template] {
+        try await http.request(method: "GET", path: "/manage-templates", queryItems: params?.queryItems)
     }
 
     /// Get a single template by ID.
@@ -27,9 +27,17 @@ public struct TemplateResource: Sendable {
     }
 
     /// Delete a template.
-    public func delete(_ templateId: String) async throws {
+    public func delete(_ templateId: String, permanent: Bool = false) async throws -> DeleteTemplateResponse {
         let safeId = try RequestBuilder.sanitizePathComponent(templateId)
-        try await http.request(method: "DELETE", path: "/manage-templates/\(safeId)") as Void
+        var queryItems: [URLQueryItem] = []
+        if permanent {
+            queryItems.append(.init(name: "permanent", value: "true"))
+        }
+        return try await http.request(
+            method: "DELETE",
+            path: "/manage-templates/\(safeId)",
+            queryItems: queryItems.isEmpty ? nil : queryItems
+        )
     }
 
     /// Publish a template (makes it available for pass generation).

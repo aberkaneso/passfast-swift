@@ -4,21 +4,24 @@ import Foundation
 public struct ImageResource: Sendable {
     let http: HTTPClient
 
-    /// Maximum allowed size for base64 image data (10 MB).
-    public static let maxBase64Size = 10 * 1024 * 1024
+    /// Maximum allowed file size for image upload (10 MB).
+    public static let maxFileSize = 10 * 1024 * 1024
 
-    /// Upload a base64-encoded image.
+    /// Upload an image as multipart/form-data.
     public func upload(_ request: UploadImageRequest) async throws -> PassImage {
-        guard !request.data.isEmpty else {
+        guard !request.fileData.isEmpty else {
             throw PassFastError.validation("Image data must not be empty.", details: nil)
         }
-        guard request.data.count <= Self.maxBase64Size else {
-            throw PassFastError.validation("Image data exceeds maximum size of \(Self.maxBase64Size) bytes.", details: nil)
+        guard request.fileData.count <= Self.maxFileSize else {
+            throw PassFastError.validation("Image data exceeds maximum size of \(Self.maxFileSize) bytes.", details: nil)
         }
-        guard Data(base64Encoded: request.data) != nil else {
-            throw PassFastError.validation("Image data is not valid base64.", details: nil)
-        }
-        return try await http.request(method: "POST", path: "/manage-images", body: request)
+        return try await http.requestMultipart(
+            path: "/manage-images",
+            fields: ["purpose": request.purpose.rawValue],
+            fileData: request.fileData,
+            fileFieldName: "file",
+            fileName: request.fileName ?? "image"
+        )
     }
 
     /// List all images.
@@ -27,8 +30,8 @@ public struct ImageResource: Sendable {
     }
 
     /// Delete an image by ID.
-    public func delete(_ imageId: String) async throws {
+    public func delete(_ imageId: String) async throws -> DeleteImageResponse {
         let safeId = try RequestBuilder.sanitizePathComponent(imageId)
-        try await http.request(method: "DELETE", path: "/manage-images/\(safeId)") as Void
+        return try await http.request(method: "DELETE", path: "/manage-images/\(safeId)")
     }
 }
