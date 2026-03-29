@@ -14,6 +14,10 @@ DerivedData/
 *.xcscmblueprint
 *.xccheckout
 
+# Claude Code
+.claude/
+CLAUDE.md
+
 # Environment
 .env
 .env.*
