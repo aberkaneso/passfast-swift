@@ -1,9 +1,11 @@
 # PassFast Swift SDK
 
-Official Swift SDK for the [PassFast](https://passfa.st) Apple Wallet Pass platform.
+Official Swift SDK for the [PassFast](https://passfa.st) Apple Wallet and Google Wallet pass platform.
 
 - **Swift concurrency** — all methods are `async throws`
+- **Apple & Google Wallet** — generate passes for both platforms
 - **PKPass integration** — generate passes ready for Apple Wallet
+- **Pass Sharing** — create public share links for pass distribution
 - **SwiftUI components** — `AddToWalletButton` and `PassSheet`
 - **Zero dependencies** — uses `URLSession` only
 - iOS 16+ / macOS 13+
@@ -16,7 +18,7 @@ Add to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/aberkaneso/passfast-swift", from: "1.0.0"),
+    .package(url: "https://github.com/aberkaneso/passfast-swift", from: "2.0.0"),
 ]
 ```
 
@@ -56,7 +58,7 @@ let client = PassFastClient(
 ### Passes
 
 ```swift
-// Generate raw .pkpass data
+// Generate Apple .pkpass binary
 let response = try await client.passes.generate(.init(
     templateId: "...",
     serialNumber: "MBR-001",
@@ -72,76 +74,62 @@ let (pkPass, passId) = try await client.passes.generatePKPass(.init(
     data: ["name": "Jane"]
 ))
 
+// Generate Google Wallet pass
+let google = try await client.passes.generateGoogle(.init(
+    templateId: "...",
+    serialNumber: "MBR-001",
+    data: ["name": "Jane"]
+))
+// google.saveUrl — Google Wallet save URL
+
+// Generate both Apple and Google passes
+let dual = try await client.passes.generateDual(.init(
+    templateId: "...",
+    serialNumber: "MBR-001",
+    data: ["name": "Jane"]
+))
+// dual.apple?.downloadUrl, dual.google?.saveUrl, dual.warnings
+
 // List passes
 let passes = try await client.passes.list(ListPassesParams(status: .active, limit: 10))
 
-// Update (triggers push notification)
-let result = try await client.passes.update(passId, UpdatePassRequest(
-    data: ["points": "2000"]
-))
-// result.pushSent
+// List passes filtered by wallet type
+let googlePasses = try await client.passes.list(ListPassesParams(walletType: "google"))
 
-// Void a pass
+// Get, download, update, void by ID
+let pass = try await client.passes.get(passId)
+let data = try await client.passes.download(passId)
+let result = try await client.passes.update(passId, UpdatePassRequest(
+    data: ["points": "2000"],
+    pushUpdate: true
+))
 let voided = try await client.passes.void(passId)
 
-// Download .pkpass binary
-let data = try await client.passes.download(passId)
+// Serial number lookups (with optional wallet type)
+let passBySN = try await client.passes.getBySerial("MBR-001")
+let updated = try await client.passes.updateBySerial("MBR-001", UpdatePassRequest(data: ["points": "3000"]))
+let voidedBySN = try await client.passes.voidBySerial("MBR-001")
+let dataBySN = try await client.passes.downloadBySerial("MBR-001")
+
+// Specify wallet type for serial lookups (when both Apple and Google exist)
+let googlePass = try await client.passes.getBySerial("MBR-001", walletType: "google")
 ```
 
-### Templates
+### Pass Sharing
 
 ```swift
-let template = try await client.templates.create(.init(
-    name: "Loyalty Card",
-    passStyle: .storeCard,
-    structure: ["headerFields": [["key": "name", "label": "Name", "value": ""]]]
-))
+// Create a share token for a pass
+let shareToken = try await client.sharing.createShareToken(
+    CreateShareTokenRequest(passId: passId)
+)
+// shareToken.shareToken, shareToken.shareUrl
 
-try await client.templates.publish(template.id)
-let templates = try await client.templates.list()
-```
+// Get public metadata for a shared pass (no auth required)
+let metadata = try await client.sharing.getMetadata(shareToken.shareToken)
+// metadata.serialNumber, metadata.hasApple, metadata.hasGoogle, metadata.templateName
 
-### Organization & Apps
-
-```swift
-let org = try await client.organization.get()
-let apps = try await client.organization.listApps()
-
-let app = try await client.organization.createApp(.init(
-    name: "My App",
-    appleTeamId: "TEAMID",
-    passTypeIdentifier: "pass.com.example"
-))
-
-// Regenerate webhook secret
-let updated = try await client.organization.updateApp(app.id, .init(
-    regenerateWebhookSecret: true
-))
-print(updated.webhookSecretRaw!) // shown once
-```
-
-### API Keys
-
-```swift
-let created = try await client.apiKeys.create(.init(
-    name: "iOS Key",
-    keyType: .publishable
-))
-print(created.rawKey) // shown once
-
-let keys = try await client.apiKeys.list()
-try await client.apiKeys.revoke(created.id)
-```
-
-### Members
-
-```swift
-let response = try await client.members.list()
-// response.members, response.invitations
-
-try await client.members.invite(.init(email: "dev@example.com", role: .editor))
-try await client.members.changeRole(userId, .init(role: .admin))
-try await client.members.remove(userId)
+// Download shared .pkpass (no auth required)
+let sharedData = try await client.sharing.download(shareToken.shareToken)
 ```
 
 ### Webhook Events
