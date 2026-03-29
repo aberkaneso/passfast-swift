@@ -64,11 +64,11 @@ struct RequestBuilderTests {
     }
 
     @Test func bodyEncoding() throws {
-        let body = UpdateOrgRequest(name: "Acme")
+        let body = UpdatePassRequest(data: ["name": "Acme"])
         let req = try builder.buildRequest(method: "PATCH", path: "/test", body: body)
         #expect(req.value(forHTTPHeaderField: "Content-Type") == "application/json")
         let json = try JSONSerialization.jsonObject(with: req.httpBody!) as! [String: Any]
-        #expect(json["name"] as? String == "Acme")
+        #expect(json["data"] != nil)
     }
 
     @Test func noBodyNoContentType() throws {

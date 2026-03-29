@@ -4,14 +4,7 @@ import Foundation
 
 @Test func clientInitialization() {
     let client = PassFastClient(apiKey: "sk_live_test")
-    // Verify all resources are accessible (non-optional properties, so just access them)
     _ = client.passes
-    _ = client.templates
-    _ = client.images
-    _ = client.certificates
-    _ = client.organization
-    _ = client.apiKeys
-    _ = client.members
     _ = client.webhookEvents
 }
 
@@ -72,6 +65,8 @@ import Foundation
     #expect(pass.serialNumber == "SN-001")
     #expect(pass.status == .active)
     #expect(pass.dynamicData["name"] == AnyCodable("Jane"))
+    #expect(pass.walletType == nil)
+    #expect(pass.googleSaveUrl == nil)
 }
 
 @Test func errorParsing() {

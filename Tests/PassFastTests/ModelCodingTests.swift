@@ -7,14 +7,6 @@ struct ModelCodingTests {
 
     // MARK: - Enums
 
-    @Test func passStyleRoundTrip() throws {
-        for style in [PassStyle.coupon, .eventTicket, .generic, .boardingPass, .storeCard] {
-            let data = try JSONEncoder().encode(style)
-            let decoded = try JSONDecoder().decode(PassStyle.self, from: data)
-            #expect(decoded == style)
-        }
-    }
-
     @Test func passStatusRoundTrip() throws {
         for status in [PassStatus.active, .invalidated, .expired] {
             let data = try JSONEncoder().encode(status)
@@ -23,41 +15,11 @@ struct ModelCodingTests {
         }
     }
 
-    @Test func imagePurposeRoundTrip() throws {
-        for purpose in [ImagePurpose.icon, .icon2x, .logo, .strip, .background, .footer] {
-            let data = try JSONEncoder().encode(purpose)
-            let decoded = try JSONDecoder().decode(ImagePurpose.self, from: data)
-            #expect(decoded == purpose)
-        }
-    }
-
-    @Test func invitationStatusRoundTrip() throws {
-        for status in [InvitationStatus.pending, .accepted, .expired, .revoked] {
-            let data = try JSONEncoder().encode(status)
-            let decoded = try JSONDecoder().decode(InvitationStatus.self, from: data)
-            #expect(decoded == status)
-        }
-    }
-
-    @Test func certTypeRawValues() {
-        #expect(CertType.signerCert.rawValue == "signer_cert")
-        #expect(CertType.signerKey.rawValue == "signer_key")
-        #expect(CertType.wwdr.rawValue == "wwdr")
-    }
-
-    @Test func keyTypeRoundTrip() throws {
-        for kt in [KeyType.secret, .publishable] {
-            let data = try JSONEncoder().encode(kt)
-            let decoded = try JSONDecoder().decode(KeyType.self, from: data)
-            #expect(decoded == kt)
-        }
-    }
-
-    @Test func orgRoleRoundTrip() throws {
-        for role in [OrgRole.owner, .admin, .editor, .viewer] {
-            let data = try JSONEncoder().encode(role)
-            let decoded = try JSONDecoder().decode(OrgRole.self, from: data)
-            #expect(decoded == role)
+    @Test func walletTypeRoundTrip() throws {
+        for wt in [WalletType.apple, .google] {
+            let data = try JSONEncoder().encode(wt)
+            let decoded = try JSONDecoder().decode(WalletType.self, from: data)
+            #expect(decoded == wt)
         }
     }
 
@@ -75,180 +37,6 @@ struct ModelCodingTests {
     }
 
     // MARK: - Models
-
-    @Test func templateDecoding() throws {
-        let json = """
-        {
-            "id": "tmpl-1",
-            "organization_id": "org-1",
-            "app_id": "app-1",
-            "name": "Loyalty Card",
-            "description": null,
-            "pass_style": "storeCard",
-            "structure": {"key": "value"},
-            "field_schema": null,
-            "is_published": false,
-            "is_archived": false,
-            "icon_image_id": null,
-            "logo_image_id": null,
-            "strip_image_id": null,
-            "thumbnail_image_id": null,
-            "background_image_id": null,
-            "published_at": null,
-            "created_at": "2026-01-01T00:00:00Z",
-            "updated_at": "2026-01-01T00:00:00Z"
-        }
-        """.data(using: .utf8)!
-        let template = try JSONDecoder().decode(Template.self, from: json)
-        #expect(template.id == "tmpl-1")
-        #expect(template.passStyle == .storeCard)
-        #expect(template.isPublished == false)
-        #expect(template.isArchived == false)
-        #expect(template.fieldSchema == nil)
-    }
-
-    @Test func organizationDecoding() throws {
-        let json = """
-        {"id":"org-1","name":"Acme","slug":"acme","apns_key_id":null,"billing_plan":"pro",
-         "monthly_pass_limit":10000,"features":null,"is_active":true,
-         "created_at":"2026-01-01T00:00:00Z","updated_at":"2026-01-01T00:00:00Z"}
-        """.data(using: .utf8)!
-        let org = try JSONDecoder().decode(Organization.self, from: json)
-        #expect(org.id == "org-1")
-        #expect(org.name == "Acme")
-        #expect(org.slug == "acme")
-        #expect(org.billingPlan == "pro")
-        #expect(org.isActive == true)
-    }
-
-    @Test func appDecoding() throws {
-        let json = """
-        {
-            "id": "app-1",
-            "organization_id": "org-1",
-            "name": "My App",
-            "apple_team_id": "TEAM123",
-            "pass_type_identifier": "pass.com.example",
-            "validation_webhook_url": null,
-            "webhook_url": null,
-            "is_active": true,
-            "webhook_secret": null,
-            "created_at": "2026-01-01T00:00:00Z",
-            "updated_at": "2026-01-01T00:00:00Z"
-        }
-        """.data(using: .utf8)!
-        let app = try JSONDecoder().decode(App.self, from: json)
-        #expect(app.id == "app-1")
-        #expect(app.appleTeamId == "TEAM123")
-        #expect(app.passTypeIdentifier == "pass.com.example")
-        #expect(app.isActive == true)
-    }
-
-    @Test func apiKeyDecoding() throws {
-        let json = """
-        {
-            "id": "key-1",
-            "name": "Production",
-            "key_type": "secret",
-            "key_prefix": "sk_live_",
-            "scopes": ["passes:write", "passes:read"],
-            "expires_at": null,
-            "is_active": true,
-            "last_used_at": null,
-            "created_at": "2026-01-01T00:00:00Z"
-        }
-        """.data(using: .utf8)!
-        let key = try JSONDecoder().decode(ApiKey.self, from: json)
-        #expect(key.keyType == .secret)
-        #expect(key.scopes.count == 2)
-        #expect(key.keyPrefix == "sk_live_")
-        #expect(key.isActive == true)
-    }
-
-    @Test func apiKeyCreatedDecoding() throws {
-        let json = """
-        {
-            "id": "key-1",
-            "name": "New Key",
-            "key_type": "publishable",
-            "key_prefix": "pk_live_",
-            "scopes": ["passes:read"],
-            "raw_key": "pk_live_abc123xyz",
-            "message": "API key created successfully",
-            "expires_at": null,
-            "is_active": true,
-            "created_at": "2026-01-01T00:00:00Z"
-        }
-        """.data(using: .utf8)!
-        let key = try JSONDecoder().decode(ApiKeyCreated.self, from: json)
-        #expect(key.rawKey == "pk_live_abc123xyz")
-        #expect(key.keyType == .publishable)
-        #expect(key.keyPrefix == "pk_live_")
-        #expect(key.message == "API key created successfully")
-    }
-
-    @Test func memberDecoding() throws {
-        let json = #"{"id":"m-1","user_id":"user-1","email":"a@b.com","role":"admin","created_at":"2026-01-01T00:00:00Z"}"#.data(using: .utf8)!
-        let member = try JSONDecoder().decode(Member.self, from: json)
-        #expect(member.id == "m-1")
-        #expect(member.userId == "user-1")
-        #expect(member.role == .admin)
-    }
-
-    @Test func invitationDecoding() throws {
-        let json = """
-        {"id":"inv-1","email":"b@c.com","role":"editor","status":"pending","expires_at":"2026-02-01T00:00:00Z","created_at":"2026-01-01T00:00:00Z"}
-        """.data(using: .utf8)!
-        let inv = try JSONDecoder().decode(Invitation.self, from: json)
-        #expect(inv.id == "inv-1")
-        #expect(inv.role == .editor)
-        #expect(inv.status == .pending)
-    }
-
-    @Test func passImageDecoding() throws {
-        let json = """
-        {
-            "id": "img-1",
-            "organization_id": "org-1",
-            "app_id": "app-1",
-            "purpose": "icon",
-            "mime_type": "image/png",
-            "size_bytes": 4096,
-            "width": 58,
-            "height": 58,
-            "storage_path": "/images/icon.png",
-            "preview_url": "https://example.com/preview/icon.png",
-            "uploaded_at": "2026-01-01T00:00:00Z"
-        }
-        """.data(using: .utf8)!
-        let img = try JSONDecoder().decode(PassImage.self, from: json)
-        #expect(img.purpose == .icon)
-        #expect(img.mimeType == "image/png")
-        #expect(img.sizeBytes == 4096)
-        #expect(img.width == 58)
-        #expect(img.previewUrl == "https://example.com/preview/icon.png")
-    }
-
-    @Test func certificateDecoding() throws {
-        let json = """
-        {
-            "id": "cert-1",
-            "app_id": "app-1",
-            "cert_type": "signer_cert",
-            "cert_hash": "abc123",
-            "common_name": "Apple Worldwide",
-            "is_active": true,
-            "valid_from": "2025-01-01T00:00:00Z",
-            "valid_until": "2027-01-01T00:00:00Z",
-            "created_at": "2026-01-01T00:00:00Z"
-        }
-        """.data(using: .utf8)!
-        let cert = try JSONDecoder().decode(Certificate.self, from: json)
-        #expect(cert.certType == .signerCert)
-        #expect(cert.isActive == true)
-        #expect(cert.certHash == "abc123")
-        #expect(cert.commonName == "Apple Worldwide")
-    }
 
     @Test func webhookEventDecoding() throws {
         let json = """
@@ -297,15 +85,6 @@ struct ModelCodingTests {
         #expect(location.relevantText == nil)
     }
 
-    // MARK: - RemoveMemberResponse
-
-    @Test func removeMemberResponseDecoding() throws {
-        let json = #"{"id":"u-1","removed":true}"#.data(using: .utf8)!
-        let resp = try JSONDecoder().decode(RemoveMemberResponse.self, from: json)
-        #expect(resp.id == "u-1")
-        #expect(resp.removed == true)
-    }
-
     // MARK: - Request Encoding
 
     @Test func generatePassRequestEncoding() throws {
@@ -342,24 +121,16 @@ struct ModelCodingTests {
         #expect(locations?[0]["latitude"] as? Double == 37.33)
     }
 
-    @Test func createTemplateRequestEncoding() throws {
-        let req = CreateTemplateRequest(
-            name: "Loyalty",
-            passStyle: .storeCard,
-            structure: ["key": "val"]
+    @Test func generatePassRequestWithWalletType() throws {
+        let req = GeneratePassRequest(
+            templateId: "tmpl-1",
+            serialNumber: "SN-001",
+            data: ["name": "Jane"],
+            walletType: "google"
         )
         let data = try JSONEncoder().encode(req)
         let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
-        #expect(json["name"] as? String == "Loyalty")
-        #expect(json["pass_style"] as? String == "storeCard")
-    }
-
-    @Test func createApiKeyRequestEncoding() throws {
-        let req = CreateApiKeyRequest(name: "Test", keyType: .secret, scopes: ["passes:read"])
-        let data = try JSONEncoder().encode(req)
-        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
-        #expect(json["key_type"] as? String == "secret")
-        #expect((json["scopes"] as? [String])?.first == "passes:read")
+        #expect(json["wallet_type"] as? String == "google")
     }
 
     @Test func updatePassRequestEncoding() throws {
@@ -394,6 +165,8 @@ struct ModelCodingTests {
         #expect(json["data"] == nil)
     }
 
+    // MARK: - Response Decoding
+
     @Test func updatePassResponseDecoding() throws {
         let json = """
         {
@@ -409,42 +182,22 @@ struct ModelCodingTests {
         #expect(resp.status == .active)
         #expect(resp.devicesNotified == 3)
         #expect(resp.expiresAt == nil)
+        #expect(resp.walletType == nil)
     }
 
-    @Test func listPassesParamsWithDateFilters() throws {
-        let params = ListPassesParams(
-            status: .active,
-            createdAfter: "2026-01-01T00:00:00Z",
-            createdBefore: "2026-02-01T00:00:00Z"
-        )
-        let items = params.queryItems
-        #expect(items.contains { $0.name == "status" && $0.value == "active" })
-        #expect(items.contains { $0.name == "created_after" && $0.value == "2026-01-01T00:00:00Z" })
-        #expect(items.contains { $0.name == "created_before" && $0.value == "2026-02-01T00:00:00Z" })
-    }
-
-    @Test func listPassesParamsDateFiltersOmittedWhenNil() throws {
-        let params = ListPassesParams(limit: 10)
-        let items = params.queryItems
-        #expect(!items.contains { $0.name == "created_after" })
-        #expect(!items.contains { $0.name == "created_before" })
-        #expect(items.contains { $0.name == "limit" && $0.value == "10" })
-    }
-
-    @Test func changeRoleResponseDecoding() throws {
-        let json = #"{"id":"m-1","role":"admin"}"#.data(using: .utf8)!
-        let resp = try JSONDecoder().decode(ChangeRoleResponse.self, from: json)
-        #expect(resp.id == "m-1")
-        #expect(resp.role == .admin)
-    }
-
-    @Test func invitationWithAcceptUrlDecoding() throws {
+    @Test func updatePassResponseWithWalletType() throws {
         let json = """
-        {"id":"inv-1","email":"b@c.com","role":"editor","status":"pending","accept_url":"https://example.com/accept?token=abc","expires_at":"2026-02-01T00:00:00Z","created_at":"2026-01-01T00:00:00Z"}
+        {
+            "id": "pass-1",
+            "status": "active",
+            "devices_notified": 1,
+            "updated_at": "2026-01-02T00:00:00Z",
+            "expires_at": null,
+            "wallet_type": "google"
+        }
         """.data(using: .utf8)!
-        let inv = try JSONDecoder().decode(Invitation.self, from: json)
-        #expect(inv.acceptUrl == "https://example.com/accept?token=abc")
-        #expect(inv.role == .editor)
+        let resp = try JSONDecoder().decode(UpdatePassResponse.self, from: json)
+        #expect(resp.walletType == "google")
     }
 
     @Test func voidPassResponseDecoding() throws {
@@ -467,5 +220,131 @@ struct ModelCodingTests {
         #expect(resp.pkpassRebuilt == true)
         #expect(resp.devicesNotified == 2)
         #expect(resp.warning == nil)
+    }
+
+    @Test func googleGenerateResponseDecoding() throws {
+        let json = """
+        {
+            "id": "pass-1",
+            "serial_number": "SN-001",
+            "wallet_type": "google",
+            "save_url": "https://pay.google.com/gp/v/save/...",
+            "google_object_id": "issuer.SN-001",
+            "status": "active",
+            "external_id": null
+        }
+        """.data(using: .utf8)!
+        let resp = try JSONDecoder().decode(GoogleGenerateResponse.self, from: json)
+        #expect(resp.id == "pass-1")
+        #expect(resp.walletType == "google")
+        #expect(resp.saveUrl == "https://pay.google.com/gp/v/save/...")
+        #expect(resp.googleObjectId == "issuer.SN-001")
+    }
+
+    @Test func dualGenerateResponseDecoding() throws {
+        let json = """
+        {
+            "apple": {
+                "id": "pass-a",
+                "serial_number": "SN-001",
+                "wallet_type": "apple",
+                "status": "active",
+                "download_url": "/manage-passes/pass-a/download"
+            },
+            "google": {
+                "id": "pass-g",
+                "serial_number": "SN-001",
+                "wallet_type": "google",
+                "status": "active",
+                "save_url": "https://pay.google.com/gp/v/save/...",
+                "google_object_id": "issuer.SN-001"
+            },
+            "warnings": []
+        }
+        """.data(using: .utf8)!
+        let resp = try JSONDecoder().decode(DualGenerateResponse.self, from: json)
+        #expect(resp.apple?.id == "pass-a")
+        #expect(resp.apple?.downloadUrl == "/manage-passes/pass-a/download")
+        #expect(resp.google?.id == "pass-g")
+        #expect(resp.google?.saveUrl == "https://pay.google.com/gp/v/save/...")
+        #expect(resp.warnings?.isEmpty == true)
+    }
+
+    @Test func dualGenerateResponsePartialFailure() throws {
+        let json = """
+        {
+            "apple": {
+                "id": "pass-a",
+                "serial_number": "SN-001",
+                "wallet_type": "apple",
+                "status": "active",
+                "download_url": "/manage-passes/pass-a/download"
+            },
+            "google": null,
+            "warnings": ["Google generation failed: no credentials configured"]
+        }
+        """.data(using: .utf8)!
+        let resp = try JSONDecoder().decode(DualGenerateResponse.self, from: json)
+        #expect(resp.apple != nil)
+        #expect(resp.google == nil)
+        #expect(resp.warnings?.count == 1)
+    }
+
+    @Test func passDecodingWithWalletType() throws {
+        let json = """
+        {
+            "id": "pass-1",
+            "serial_number": "SN-001",
+            "template_id": "tmpl-1",
+            "organization_id": "org-1",
+            "app_id": "app-1",
+            "status": "active",
+            "dynamic_data": {},
+            "external_id": null,
+            "authentication_token": "tok-1",
+            "pkpass_storage_path": "/path",
+            "pkpass_hash": "hash",
+            "expires_at": null,
+            "voided_at": null,
+            "created_at": "2026-01-01T00:00:00Z",
+            "updated_at": "2026-01-01T00:00:00Z",
+            "last_updated_at": null,
+            "wallet_type": "google",
+            "google_save_url": "https://pay.google.com/gp/v/save/...",
+            "google_object_id": "issuer.SN-001"
+        }
+        """.data(using: .utf8)!
+        let pass = try JSONDecoder().decode(Pass.self, from: json)
+        #expect(pass.walletType == .google)
+        #expect(pass.googleSaveUrl == "https://pay.google.com/gp/v/save/...")
+        #expect(pass.googleObjectId == "issuer.SN-001")
+    }
+
+    // MARK: - Query Params
+
+    @Test func listPassesParamsWithDateFilters() throws {
+        let params = ListPassesParams(
+            status: .active,
+            createdAfter: "2026-01-01T00:00:00Z",
+            createdBefore: "2026-02-01T00:00:00Z"
+        )
+        let items = params.queryItems
+        #expect(items.contains { $0.name == "status" && $0.value == "active" })
+        #expect(items.contains { $0.name == "created_after" && $0.value == "2026-01-01T00:00:00Z" })
+        #expect(items.contains { $0.name == "created_before" && $0.value == "2026-02-01T00:00:00Z" })
+    }
+
+    @Test func listPassesParamsDateFiltersOmittedWhenNil() throws {
+        let params = ListPassesParams(limit: 10)
+        let items = params.queryItems
+        #expect(!items.contains { $0.name == "created_after" })
+        #expect(!items.contains { $0.name == "created_before" })
+        #expect(items.contains { $0.name == "limit" && $0.value == "10" })
+    }
+
+    @Test func listPassesParamsWithWalletType() throws {
+        let params = ListPassesParams(walletType: "google")
+        let items = params.queryItems
+        #expect(items.contains { $0.name == "wallet_type" && $0.value == "google" })
     }
 }

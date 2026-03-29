@@ -7,6 +7,8 @@ import PassKit
 public struct PassResource: Sendable {
     let http: HTTPClient
 
+    // MARK: - Generate (Apple — returns binary .pkpass)
+
     /// Generate a .pkpass binary. Returns passId, raw pkpass data, and whether it already existed.
     public func generate(_ request: GeneratePassRequest) async throws -> GeneratePassResponse {
         let raw = try await http.requestRaw(
@@ -29,6 +31,26 @@ public struct PassResource: Sendable {
         return (pkPass, response.passId)
     }
     #endif
+
+    // MARK: - Generate (Google — returns JSON)
+
+    /// Generate a Google Wallet pass. Returns a JSON response with a `saveUrl`.
+    public func generateGoogle(_ request: GeneratePassRequest) async throws -> GoogleGenerateResponse {
+        var req = request
+        req.walletType = "google"
+        return try await http.request(method: "POST", path: "/generate-pass", body: req)
+    }
+
+    // MARK: - Generate (Dual — returns JSON with both)
+
+    /// Generate both Apple and Google passes in a single call.
+    public func generateDual(_ request: GeneratePassRequest) async throws -> DualGenerateResponse {
+        var req = request
+        req.walletType = "both"
+        return try await http.request(method: "POST", path: "/generate-pass", body: req)
+    }
+
+    // MARK: - List / Get / Download / Update / Void
 
     /// List passes with optional filters.
     public func list(_ params: ListPassesParams? = nil) async throws -> [Pass] {
@@ -71,28 +93,54 @@ public struct PassResource: Sendable {
         return try await http.request(method: "POST", path: "/manage-passes/\(safeId)/void")
     }
 
+    // MARK: - Serial Number Operations
+
     /// Get a pass by serial number.
-    public func getBySerial(_ serialNumber: String) async throws -> Pass {
+    public func getBySerial(_ serialNumber: String, walletType: String? = nil) async throws -> Pass {
         let safeSN = try RequestBuilder.sanitizePathComponent(serialNumber)
-        return try await http.request(method: "GET", path: "/manage-passes/serial/\(safeSN)")
+        return try await http.request(
+            method: "GET",
+            path: "/manage-passes/serial/\(safeSN)",
+            queryItems: walletTypeQueryItems(walletType)
+        )
     }
 
     /// Update a pass by serial number.
-    public func updateBySerial(_ serialNumber: String, _ request: UpdatePassRequest) async throws -> UpdatePassResponse {
+    public func updateBySerial(_ serialNumber: String, _ request: UpdatePassRequest, walletType: String? = nil) async throws -> UpdatePassResponse {
         let safeSN = try RequestBuilder.sanitizePathComponent(serialNumber)
-        return try await http.request(method: "PATCH", path: "/manage-passes/serial/\(safeSN)", body: request)
+        return try await http.request(
+            method: "PATCH",
+            path: "/manage-passes/serial/\(safeSN)",
+            queryItems: walletTypeQueryItems(walletType),
+            body: request
+        )
     }
 
     /// Void (invalidate) a pass by serial number.
-    public func voidBySerial(_ serialNumber: String) async throws -> VoidPassResponse {
+    public func voidBySerial(_ serialNumber: String, walletType: String? = nil) async throws -> VoidPassResponse {
         let safeSN = try RequestBuilder.sanitizePathComponent(serialNumber)
-        return try await http.request(method: "POST", path: "/manage-passes/serial/\(safeSN)/void")
+        return try await http.request(
+            method: "POST",
+            path: "/manage-passes/serial/\(safeSN)/void",
+            queryItems: walletTypeQueryItems(walletType)
+        )
     }
 
     /// Download the .pkpass binary by serial number.
-    public func downloadBySerial(_ serialNumber: String) async throws -> Data {
+    public func downloadBySerial(_ serialNumber: String, walletType: String? = nil) async throws -> Data {
         let safeSN = try RequestBuilder.sanitizePathComponent(serialNumber)
-        let raw = try await http.requestRaw(method: "GET", path: "/manage-passes/serial/\(safeSN)/download")
+        let raw = try await http.requestRaw(
+            method: "GET",
+            path: "/manage-passes/serial/\(safeSN)/download",
+            queryItems: walletTypeQueryItems(walletType)
+        )
         return raw.data
+    }
+
+    // MARK: - Private
+
+    private func walletTypeQueryItems(_ walletType: String?) -> [URLQueryItem]? {
+        guard let walletType else { return nil }
+        return [URLQueryItem(name: "wallet_type", value: walletType)]
     }
 }

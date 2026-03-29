@@ -13,18 +13,6 @@ import Foundation
 public final class PassFastClient: Sendable {
     /// Pass generation, listing, updating, voiding, downloading.
     public let passes: PassResource
-    /// Template CRUD and publishing.
-    public let templates: TemplateResource
-    /// Image listing and deletion.
-    public let images: ImageResource
-    /// Certificate listing and deletion.
-    public let certificates: CertificateResource
-    /// Organization settings and app management.
-    public let organization: OrganizationResource
-    /// API key management.
-    public let apiKeys: APIKeyResource
-    /// Member and invitation management.
-    public let members: MemberResource
     /// Webhook event delivery history.
     public let webhookEvents: WebhookEventResource
 
@@ -50,12 +38,6 @@ public final class PassFastClient: Sendable {
         let http = HTTPClient(configuration: config)
 
         self.passes = PassResource(http: http)
-        self.templates = TemplateResource(http: http)
-        self.images = ImageResource(http: http)
-        self.certificates = CertificateResource(http: http)
-        self.organization = OrganizationResource(http: http)
-        self.apiKeys = APIKeyResource(http: http)
-        self.members = MemberResource(http: http, orgId: config.orgId)
         self.webhookEvents = WebhookEventResource(http: http)
     }
 }

@@ -1,7 +1,7 @@
 # PassFast Swift SDK
 
 ## Overview
-Swift SDK for the PassFast API — manages Apple Wallet passes, templates, certificates, images, API keys, members, and webhook events.
+Swift SDK for the PassFast API — manages Apple Wallet and Google Wallet passes and webhook events.
 
 ## Tech Stack
 - **Language**: Swift 5 (Swift Tools 6.0)
@@ -18,13 +18,13 @@ Sources/PassFast/
   AnyCodable.swift        — Type-erased Codable for arbitrary JSON
   Configuration.swift     — API key, base URL, org/app IDs config
   Errors.swift            — PassFastError enum
+  WebhookVerifier.swift   — HMAC-SHA256 webhook signature verification
   Networking/
     HTTPClient.swift      — URL session HTTP layer
     RequestBuilder.swift  — URL/request construction
-  Resources/              — One file per API resource (CRUD methods)
-    PassResource.swift, TemplateResource.swift, MemberResource.swift,
-    ImageResource.swift, CertificateResource.swift, APIKeyResource.swift,
-    OrganizationResource.swift, WebhookEventResource.swift
+  Resources/
+    PassResource.swift    — Pass generation, listing, updating, voiding, downloading
+    WebhookEventResource.swift — Webhook event delivery history
   UI/
     AddToWalletButton.swift, PassSheet.swift
 Tests/PassFastTests/
@@ -32,10 +32,10 @@ Tests/PassFastTests/
   TestHelpers.swift       — makeTestHTTPClient(), mockResponse() helpers
   MockURLProtocol.swift   — URLProtocol mock for HTTP tests
   ModelCodingTests.swift  — Encoding/decoding unit tests
-  PassResourceTests.swift, SimpleResourceTests.swift,
-  TemplateResourceTests.swift, OrganizationResourceTests.swift,
+  PassResourceTests.swift — Pass resource method tests
+  WebhookEventResourceTests.swift — Webhook event resource tests
   RequestBuilderTests.swift, ConfigurationTests.swift,
-  ErrorParsingTests.swift, PassFastTests.swift
+  ErrorParsingTests.swift, SecurityTests.swift, PassFastTests.swift
 ```
 
 ## Key Conventions
@@ -43,9 +43,9 @@ Tests/PassFastTests/
 - **Resource pattern**: Each resource struct holds an `HTTPClient` ref, methods are `async throws`
 - **Path params**: Always use `RequestBuilder.sanitizePathComponent()` for user-provided path segments
 - **Query params**: `ListXxxParams` structs have a `queryItems` computed property returning `[URLQueryItem]`
-- **Request types**: Conform to `Encodable, Sendable`; response/model types to `Codable, Sendable`. Exception: `UploadImageRequest` is `Sendable` only (uses multipart upload, not JSON)
-- **Image upload**: Uses `multipart/form-data` via `HTTPClient.requestMultipart()`, not JSON
-- **Delete methods**: Return typed response structs (e.g. `DeleteTemplateResponse`, `DeleteImageResponse`), not `Void`
+- **Request types**: Conform to `Encodable, Sendable`; response/model types to `Codable, Sendable`
+- **Google Wallet**: `GeneratePassRequest.walletType` accepts `"apple"`, `"google"`, or `"both"`. Use `generateGoogle()` / `generateDual()` for JSON responses, `generate()` for Apple binary .pkpass
+- **Serial number methods**: `getBySerial`, `updateBySerial`, `voidBySerial`, `downloadBySerial` accept optional `walletType` parameter
 - **Mock tests**: All tests using `MockURLProtocol` must be nested under `AllMockTests` (serialized suite) to avoid races
 - **Test style**: Use `#expect()` assertions, not XCTAssert
 
@@ -54,7 +54,7 @@ Tests/PassFastTests/
 - **Test**: `swift test`
 
 ## OpenAPI Spec
-The SDK mirrors an OpenAPI spec. When syncing:
+The SDK mirrors the Passes and Webhook Events sections of the OpenAPI spec. When syncing:
 1. Add/update models in `Types.swift`
 2. Update resource methods in `Resources/`
 3. Add corresponding tests in the appropriate test file
