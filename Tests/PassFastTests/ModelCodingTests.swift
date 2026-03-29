@@ -347,4 +347,45 @@ struct ModelCodingTests {
         let items = params.queryItems
         #expect(items.contains { $0.name == "wallet_type" && $0.value == "google" })
     }
+
+    // MARK: - Pass Sharing
+
+    @Test func createShareTokenRequestEncoding() throws {
+        let req = CreateShareTokenRequest(passId: "pass-1")
+        let data = try JSONEncoder().encode(req)
+        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        #expect(json["pass_id"] as? String == "pass-1")
+    }
+
+    @Test func shareTokenDecoding() throws {
+        let json = """
+        {"share_token": "abc123def456", "share_url": "https://pass.example.com/s/abc123def456"}
+        """.data(using: .utf8)!
+        let token = try JSONDecoder().decode(ShareToken.self, from: json)
+        #expect(token.shareToken == "abc123def456")
+        #expect(token.shareUrl == "https://pass.example.com/s/abc123def456")
+    }
+
+    @Test func sharePassMetadataDecoding() throws {
+        let json = """
+        {
+            "serial_number": "SN-001",
+            "status": "active",
+            "has_apple": true,
+            "has_google": false,
+            "google_save_url": null,
+            "template_name": "Loyalty Card",
+            "pass_style": "storeCard",
+            "app_name": "My App",
+            "org_name": "Acme"
+        }
+        """.data(using: .utf8)!
+        let meta = try JSONDecoder().decode(SharePassMetadata.self, from: json)
+        #expect(meta.serialNumber == "SN-001")
+        #expect(meta.hasApple == true)
+        #expect(meta.hasGoogle == false)
+        #expect(meta.googleSaveUrl == nil)
+        #expect(meta.templateName == "Loyalty Card")
+        #expect(meta.orgName == "Acme")
+    }
 }

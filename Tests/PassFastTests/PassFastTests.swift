@@ -5,6 +5,7 @@ import Foundation
 @Test func clientInitialization() {
     let client = PassFastClient(apiKey: "sk_live_test")
     _ = client.passes
+    _ = client.sharing
     _ = client.webhookEvents
 }
 

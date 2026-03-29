@@ -314,6 +314,54 @@ public struct VoidPassResponse: Codable, Sendable {
     }
 }
 
+// MARK: - Pass Sharing Types
+
+public struct CreateShareTokenRequest: Encodable, Sendable {
+    public let passId: String
+
+    public init(passId: String) {
+        self.passId = passId
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case passId = "pass_id"
+    }
+}
+
+public struct ShareToken: Codable, Sendable {
+    public let shareToken: String
+    public let shareUrl: String
+
+    enum CodingKeys: String, CodingKey {
+        case shareToken = "share_token"
+        case shareUrl = "share_url"
+    }
+}
+
+public struct SharePassMetadata: Codable, Sendable {
+    public let serialNumber: String
+    public let status: String
+    public let hasApple: Bool
+    public let hasGoogle: Bool
+    public let googleSaveUrl: String?
+    public let templateName: String
+    public let passStyle: String
+    public let appName: String
+    public let orgName: String
+
+    enum CodingKeys: String, CodingKey {
+        case serialNumber = "serial_number"
+        case status
+        case hasApple = "has_apple"
+        case hasGoogle = "has_google"
+        case googleSaveUrl = "google_save_url"
+        case templateName = "template_name"
+        case passStyle = "pass_style"
+        case appName = "app_name"
+        case orgName = "org_name"
+    }
+}
+
 // MARK: - Query Parameters
 
 public struct ListPassesParams: Sendable {

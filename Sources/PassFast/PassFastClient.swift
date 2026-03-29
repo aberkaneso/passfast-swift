@@ -13,6 +13,8 @@ import Foundation
 public final class PassFastClient: Sendable {
     /// Pass generation, listing, updating, voiding, downloading.
     public let passes: PassResource
+    /// Pass sharing — create share tokens, get metadata, download shared passes.
+    public let sharing: PassSharingResource
     /// Webhook event delivery history.
     public let webhookEvents: WebhookEventResource
 
@@ -38,6 +40,7 @@ public final class PassFastClient: Sendable {
         let http = HTTPClient(configuration: config)
 
         self.passes = PassResource(http: http)
+        self.sharing = PassSharingResource(http: http)
         self.webhookEvents = WebhookEventResource(http: http)
     }
 }
